@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FORMAT EZ 2026 · CHRK</title>
+<meta name="description" content="Guida EZ 2026: come formattare Windows in modo pulito, con CHRK Installer.">
+<style>
+  :root{
+    --bg:#f4f6fb; --card:#ffffff; --ink:#14161c; --mut:#5b6472; --line:#e4e8f0;
+    --acc:#2f6df6; --acc2:#00b3a4; --ok:#12a150; --warn:#c98a00;
+    --shadow:0 1px 2px rgba(20,22,28,.05), 0 8px 24px rgba(20,22,28,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    --radius:16px;
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1117; --card:#171a22; --ink:#eceef5; --mut:#9aa3b8; --line:#2a2f3c;
+    --acc:#6f9bff; --acc2:#2fd4c4; --ok:#3ecf7a; --warn:#e0b13c;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme:dark){
+    html[data-theme="auto"]{
+      --bg:#0f1117; --card:#171a22; --ink:#eceef5; --mut:#9aa3b8; --line:#2a2f3c;
+      --acc:#6f9bff; --acc2:#2fd4c4; --ok:#3ecf7a; --warn:#e0b13c;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:26px 20px 60px}
+  a{color:var(--acc);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--acc) 35%,transparent)}
+  a:hover{border-bottom-color:var(--acc)}
+  h1{font-size:clamp(34px,7vw,52px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 8px}
+  h1 em{font-style:normal;background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-size:22px;margin:44px 0 12px;letter-spacing:-.015em;display:flex;align-items:center;gap:12px}
+  h2 .n{flex:0 0 30px;height:30px;border-radius:10px;background:var(--acc);color:#fff;font-size:14.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  h3{font-size:16.5px;margin:24px 0 6px}
+  p{margin:9px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+  .mut{color:var(--mut)}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--acc2);border:1px solid color-mix(in srgb,var(--acc2) 45%,transparent);background:color-mix(in srgb,var(--acc2) 10%,transparent);padding:4px 11px;border-radius:999px}
+  .cmd{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:14px 0 8px}
+  .cmd code{flex:1 1 auto;font-family:var(--mono);font-size:15px;white-space:pre;overflow-x:auto;color:var(--ink)}
+  .cmd.big code{font-size:19px;font-weight:600}
+  .copy{flex:0 0 auto;font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--acc);border:0;border-radius:9px;padding:9px 15px;cursor:pointer;transition:transform .12s ease,background .2s ease;white-space:nowrap}
+  .copy:hover{transform:translateY(-1px)}
+  .copy:active{transform:translateY(0)}
+  .copy.done{background:var(--ok)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{font-size:12.5px;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+  nav.toc a{font-size:13px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;border-bottom-width:1px}
+  nav.toc a:hover{color:var(--ink);border-color:var(--acc)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px;margin:14px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .card h4{margin:0 0 6px;font-size:15px}
+  .card p{margin:4px 0;color:var(--mut);font-size:14px}
+  .card .cmd{margin:10px 0 0}
+  ol.steps{list-style:none;padding:0;counter-reset:s}
+  ol.steps>li{counter-increment:s;position:relative;padding-left:36px;margin:12px 0}
+  ol.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:24px;height:24px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .todo{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 16px;margin:9px 0;cursor:pointer}
+  .todo input{margin-top:4px;width:17px;height:17px;accent-color:var(--acc)}
+  .todo.done span{text-decoration:line-through;color:var(--mut)}
+  .note{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 9%,var(--card));border-radius:0 13px 13px 0;padding:13px 16px;margin:16px 0;font-size:14.5px}
+  .good{border-left:3px solid var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--card));border-radius:0 13px 13px 0;padding:13px 16px;margin:16px 0;font-size:14.5px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:14.4px;min-width:520px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12.4px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  code.k{font-family:var(--mono);font-size:13.6px;background:color-mix(in srgb,var(--ink) 7%,transparent);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 17px;margin:16px 0;box-shadow:var(--shadow)}
+  summary{cursor:pointer;font-weight:600;font-size:14.6px}
+  details[open] summary{margin-bottom:10px}
+  .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 20px;font-size:14.5px}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .topbtn{position:fixed;right:18px;top:18px;z-index:9;font:inherit;font-size:13px;background:var(--card);color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;box-shadow:var(--shadow)}
+  .topbtn:hover{color:var(--ink)}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,22px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.22s ease;z-index:10}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media print{
+    .topbtn,.copy,nav.toc,.toast{display:none!important}
+    body{background:#fff}
+    .hero,.card,.tablewrap,details{box-shadow:none}
+    h2{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+<button class="topbtn" id="theme" title="Cambia tema">◐ tema</button>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge">rev. 2k26 · aggiornata</span>
+    <h1>FORMAT <em>EZ</em></h1>
+    <p class="mut" style="margin:0 0 6px">Una guida a cura di Gerry · il software lo installa <strong>CHRK Installer</strong></p>
+    <div class="cmd big"><code>irm s.chrk.tk | iex</code><button class="copy" data-copy="irm s.chrk.tk | iex">Copia</button></div>
+    <p class="mut" style="font-size:13.6px;margin:4px 0 0">PowerShell → incolla → Invio. Si apre la GUI con le app consigliate <strong>già spuntate</strong>: premi <em>APPLICA SELEZIONATI</i> e vai a farti un caffè.</p>
+    <div class="chips">
+      <span class="chip">17 app di base</span><span class="chip">tweak di Windows</span><span class="chip">fix mouse MarkC</span><span class="chip">MAS + WinUtil</span><span class="chip">aggiornamenti automatici</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#p0">Preparati</a><a href="#p1">Backup</a><a href="#p2">USB</a><a href="#p3">Installa</a><a href="#p4">Primo avvio</a><a href="#p5">Installer</a><a href="#p6">A mano</a><a href="#p7">Attivazione</a><a href="#p8">Driver</a><a href="#p9">Link</a>
+  </nav>
+
+  <h2 id="p0"><span class="n">0</span>Preparati (30 secondi)</h2>
+  <label class="todo"><input type="checkbox"><span>Backup di quello che ti serve da <code class="k">C:</code> — sezione 1</span></label>
+  <label class="todo"><input type="checkbox"><span>Scarica la <a href="https://www.microsoft.com/it-it/software-download/windows11">ISO di Windows 11</a></span></label>
+  <label class="todo"><input type="checkbox"><span>Procura una <strong>USB da 8 GB</strong> (16 se vuoi spazio)</span></label>
+  <label class="todo"><input type="checkbox"><span>Scarica <a href="https://rufus.ie/">Rufus</a></span></label>
+
+  <h2 id="p1"><span class="n">1</span>Backup</h2>
+  <p>Su un disco <strong>esterno</strong>: non sullo stesso PC che stai per piallare.</p>
+  <ul>
+    <li>Desktop, Documenti, Immagini, Video, Download</li>
+    <li>Salvataggi dei giochi: <code class="k">Documenti\My Games</code>, <code class="k">Saved Games</code>, <code class="k">%APPDATA%</code>, <code class="k">%LOCALAPPDATA%</code></li>
+    <li>Password e preferiti: passa tutto a un password manager (<a href="https://bitwarden.com/download/">Bitwarden</a>, l'app te la mette l'installer)</li>
+    <li>Product key e licenze, <strong>2FA recovery codes</strong>, config dei programmi che non vuoi rifare</li>
+  </ul>
+
+  <h2 id="p2"><span class="n">2</span>USB avviabile (Rufus)</h2>
+  <ol class="steps">
+    <li>Dispositivo: la tua USB · Selezione avvio: la ISO di Windows 11</li>
+    <li>Schema partizione <code class="k">GPT</code> · Destinazione <code class="k">UEFI (non CSM)</code> · File system <code class="k">NTFS</code></li>
+    <li><strong>START</strong> → si apre il pannello <em>Windows User Experience</em> (dal 3.19 i bypass sono lì). Spunta:
+      <ul>
+        <li>Remove requirement for <strong>Secure Boot e TPM 2.0</strong></li>
+        <li>Remove requirement for <strong>4GB+ RAM e 64GB+ disco</strong></li>
+        <li><strong>Disable data collection</strong> (salta le domande privacy)</li>
+        <li><strong>Remove requirement for an online Microsoft account</strong> → account locale, niente login</li>
+        <li><strong>Disable BitLocker automatic device encryption</strong> (evita casini con dual boot e recovery)</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h2 id="p3"><span class="n">3</span>Installazione</h2>
+  <ul>
+    <li><strong>Boot dalla USB</strong>: <code class="k">F12</code> / <code class="k">F11</code> / <code class="k">ESC</code> / <code class="k">DEL</code> a seconda del PC</li>
+    <li><strong>Elimina TUTTE le partizioni</strong> e installa sullo spazio non allocato</li>
+    <li>Product key → <em>"Non ho un codice Product Key"</em> → edizione → <em>"Attiva più tardi"</em></li>
+    <li>Nell'OOBE <strong>togli tutte le spunte</strong> su servizi su misura, esperienze personalizzate, pubblicità e telemetria, e crea un <strong>account locale</strong></li>
+    <li>Copilot: muta quello che puoi già dal setup</li>
+  </ul>
+  <div class="note">🚨 Niente key a caso. Se vuoi usare "la cura", gli dici di attivare dopo (sezione 7).</div>
+
+  <h2 id="p4"><span class="n">4</span>Al primo avvio</h2>
+  <ul>
+    <li><strong>Windows Update</strong> in loop: falli partire, riavvia, ripeti finché non dice "Sei aggiornato"</li>
+    <li>Controlla di essere su <strong>build 26300</strong> (26H2)</li>
+    <li>Driver: fa il grosso Windows Update, per GPU e periferiche vedi sezione 8</li>
+    <li>Barra, suggerimenti di Start e accelerazione del mouse: ci pensa l'installer al passo dopo</li>
+  </ul>
+
+  <h2 id="p5"><span class="n">5</span>Il software: CHRK Installer</h2>
+  <div class="cmd"><code>irm s.chrk.tk | iex</code><button class="copy" data-copy="irm s.chrk.tk | iex">Copia</button></div>
+  <p class="mut" style="font-size:13.6px">Si copia da solo in <code class="k">%LOCALAPPDATA%\CHRK-Installer</code> e si aggiorna da solo. Il codice sta su <a href="https://github.com/cchrkk/chrk-installer">github.com/cchrkk/chrk-installer</a>, se vuoi leggerlo prima.</p>
+  <p>Le app consigliate sono <strong>già spuntate</strong> e quelle presenti vengono saltate da sole: premi <em>APPLICA SELEZIONATI</em>.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Nel rail</th><th>Cosa fa</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Consigliati</strong> (già spuntati)</td><td>Chrome · Firefox · Brave · VLC · 7zip · Steam · Git · VS Code · Notepad++ · ShareX · Bitwarden · qBittorrent · Ventoy · LocalSend · Syncthing · WizTree · O&amp;O ShutUp10++</td></tr>
+        <tr><td><strong>CHRK.</strong> · <strong>Extra</strong></td><td>la lista mia e le app che ho scelto a mano</td></tr>
+        <tr><td><strong>Tweaks di Windows</strong></td><td>estensioni visibili e file nascosti, Esplora file su "Questo PC", barra senza widget/chat/ricerca, Copilot spento, niente suggerimenti e pubblicità in Start — con <em>Ripristina</em> se cambi idea</td></tr>
+        <tr><td><strong>Mouse fix</strong></td><td>curve MarkC per la tua scala DPI: toglie l'accelerazione del puntatore</td></tr>
+        <tr><td><strong>Wizard e script</strong></td><td><strong>MAS</strong> (attivazione) e <strong>WinUtil</strong> (debloat): si scaricano da soli e si aprono da amministratore</td></tr>
+        <tr><td><strong>Aggiornamenti automatici</strong></td><td>task di Windows che esegue <code class="k">winget upgrade --all</code> ogni N giorni</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h4>Aggiornare tutto, quando vuoi</h4>
+      <div class="cmd"><code>winget upgrade --all</code><button class="copy" data-copy="winget upgrade --all">Copia</button></div>
+    </div>
+    <div class="card">
+      <h4>Manca un'app?</h4>
+      <p>Cerca l'id esatto e poi installala:</p>
+      <div class="cmd"><code>winget search nomeprogramma</code><button class="copy" data-copy="winget search nomeprogramma">Copia</button></div>
+    </div>
+  </div>
+  <details>
+    <summary>Se preferisci farlo a mano (o l'installer non ti va)</summary>
+    <p>winget è già dentro Windows 11:</p>
+    <div class="cmd" style="align-items:flex-start">
+      <code id="manual">winget install Google.Chrome VideoLAN.VLC 7zip.7zip Valve.Steam Git.Git
+winget install Microsoft.VisualStudioCode Notepad++.Notepad++ ShareX.ShareX
+winget install Bitwarden.Bitwarden Mozilla.Firefox Brave.Brave qBittorrent.qBittorrent</code>
+      <button class="copy" data-target="#manual">Copia</button>
+    </div>
+  </details>
+
+  <h2 id="p6"><span class="n">6</span>A mano, dopo l'installer</h2>
+  <h3>Estensioni del browser</h3>
+  <ul>
+    <li><a href="https://github.com/uBlockOrigin/uBOL-home">uBlock Origin Lite</a> su Chrome · <a href="https://github.com/gorhill/uBlock">uBlock Origin full</a> su Firefox/Brave</li>
+    <li><a href="https://redditenhancementsuite.com/">RES</a> se usi Reddit · <a href="https://betterttv.com/">BetterTTV</a> se usi Twitch</li>
+    <li><a href="https://github.com/OhMyGuus/I-Still-Dont-Care-About-Cookies">I still don't care about cookies</a> (la fork viva) · <a href="https://www.tampermonkey.net/">Tampermonkey</a> · <a href="https://sponsor.ajay.app/">SponsorBlock</a></li>
+    <li><a href="https://bitwarden.com/download/">Bitwarden</a>: l'app la mette l'installer, l'estensione la metti tu — e fai il backup delle 2FA</li>
+  </ul>
+  <h3>Sistema</h3>
+  <ul>
+    <li><strong>7-Zip come Admin</strong>: click destro su 7-Zip → <em>Esegui come amministratore</em> → associa tutti i formati che può</li>
+    <li><strong>App predefinite</strong>: Impostazioni → App → App predefinite (browser, PDF…)</li>
+    <li><strong>Monitor 144Hz+</strong>: Impostazioni → Schermo → <em>Frequenza di aggiornamento</em> al massimo (controlla che non sia a 60Hz)</li>
+    <li><a href="https://www.oo-software.com/en/shutup10"><strong>O&amp;O ShutUp10++</strong></a> (l'installer lo installa): sistema privacy e telemetria, poi <strong>esporta il profilo</strong> <code class="k">.cfg</code> per il prossimo format</li>
+    <li>Windows Update: faglieli fare di nuovo, finché non finiscono</li>
+  </ul>
+
+  <h2 id="p7"><span class="n">7</span>Attivazione 💊</h2>
+  <p>Nell'installer: <em>Wizard e script</em> → <strong>MAS</strong>. Si scarica dal repo ufficiale e si apre da amministratore: scegli <code class="k">1</code> <strong>HWID</strong> (attivazione permanente) o, se non va, <code class="k">2</code> <strong>Ohook</strong> per Office oppure <strong>TSforge</strong>.</p>
+  <div class="good"><strong>TSforge</strong> (novità 2k26) attiva Windows/ESU/Office in modo permanente senza toccare i componenti di Windows né installare file. Su build 26100+ usa StaticCID e serve internet.</div>
+  <details>
+    <summary>A mano: il comando o il file da scaricare</summary>
+    <div class="cmd"><code>irm https://get.activated.win | iex</code><button class="copy" data-copy="irm https://get.activated.win | iex">Copia</button></div>
+    <p class="mut" style="font-size:13.6px">In una PowerShell <strong>da amministratore</strong>. Oppure scarica <code class="k">MAS_AIO.cmd</code> dal <a href="https://github.com/massgravel/Microsoft-Activation-Scripts">repo di MAS</a> e aprilo.</p>
+  </details>
+  <p>Se sei barbone ma non troppo: con meno di <strong>5 €</strong> compri una seriale su <a href="https://www.allkeyshop.com/blog/buy-windows-11-pro-cd-key-compare-prices/">AllKeyShop</a>, legata al tuo account.</p>
+
+  <h2 id="p8"><span class="n">8</span>Driver</h2>
+  <div class="grid">
+    <div class="card"><h4>GPU</h4><p><a href="https://www.nvidia.com/en-us/software/nvidia-app/">NVIDIA app</a> (ha sostituito GeForce Experience) · <a href="https://www.amd.com/en/support">AMD Adrenalin</a></p></div>
+    <div class="card"><h4>Periferiche</h4><p>G HUB · Razer Synapse · Corsair iCUE · SteelSeries GG: sono già nella lista dell'installer, ma dal sito del produttore li prendi più aggiornati</p></div>
+  </div>
+
+  <h2 id="p9"><span class="n">9</span>Link utili</h2>
+  <div class="links">
+    <a href="https://github.com/cchrkk/chrk-installer">CHRK Installer</a>
+    <a href="https://www.microsoft.com/software-download/windows11">ISO Windows 11</a>
+    <a href="https://rufus.ie/">Rufus</a>
+    <a href="https://learn.microsoft.com/windows/package-manager/winget/">winget</a>
+    <a href="https://christitus.com/win">WinUtil</a>
+    <a href="https://massgrave.dev/">MAS</a>
+    <a href="https://www.oo-software.com/en/shutup10">O&amp;O ShutUp10++</a>
+    <a href="https://7-zip.org/">7-Zip</a>
+    <a href="https://www.ventoy.net/">Ventoy</a>
+    <a href="https://localsend.org/">LocalSend</a>
+    <a href="https://syncthing.net/">Syncthing</a>
+    <a href="https://diskanalyzer.com/">WizTree</a>
+    <a href="https://bitwarden.com/download/">Bitwarden</a>
+    <a href="https://www.easyuefi.com/backup-software/backup-suite-free.html">Hasleo Backup</a>
+    <a href="https://donewmouseaccel.blogspot.com/">MarkC Mouse Fix</a>
+  </div>
+
+  <footer>
+    <span><strong>chrk.</strong> 2k26 ©</span>
+    <span>PROFIT?!?!?! 👌 E Z 💯</span>
+  </footer>
+</div>
+<div class="toast" id="toast">Copiato 👌</div>
+<script>
+(function () {
+  var html = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("chrk-theme"); } catch (e) {}
+  html.setAttribute("data-theme", saved || "auto");
+  document.getElementById("theme").addEventListener("click", function () {
+    var order = ["auto", "light", "dark"];
+    var cur = html.getAttribute("data-theme");
+    var next = order[(order.indexOf(cur) + 1) % order.length];
+    html.setAttribute("data-theme", next);
+    try { localStorage.setItem("chrk-theme", next); } catch (e) {}
+  });
+
+  function toast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove("show"); }, 1500);
+  }
+  function legacyCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function mark(btn) {
+    var old = btn.textContent;
+    btn.classList.add("done");
+    btn.textContent = "Copiato ✓";
+    setTimeout(function () { btn.classList.remove("done"); btn.textContent = old; }, 1600);
+  }
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest(".copy");
+    if (btn) {
+      var sel = btn.getAttribute("data-target");
+      var text = btn.getAttribute("data-copy");
+      if (!text && sel) {
+        var el = document.querySelector(sel);
+        text = el ? el.textContent : "";
+      }
+      if (!text) return;
+      text = text.replace(/^\s+|\s+$/g, "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { mark(btn); toast("Copiato 👌"); },
+          function () { if (legacyCopy(text)) { mark(btn); toast("Copiato 👌"); } else { toast("Seleziona e copia a mano"); } });
+      } else if (legacyCopy(text)) { mark(btn); toast("Copiato 👌"); }
+      else { toast("Seleziona e copia a mano"); }
+      return;
+    }
+    var todo = ev.target.closest(".todo");
+    if (todo) { setTimeout(function () { todo.classList.toggle("done", todo.querySelector("input").checked); }, 0); }
+  });
+})();
+</script>
+</body>
+</html>
