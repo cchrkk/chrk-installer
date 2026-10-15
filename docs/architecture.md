@@ -6,7 +6,7 @@
         dati                       build                        artefatto
 ┌────────────────────┐      ┌──────────────────┐      ┌────────────────────────┐
 │ catalog-mine.json  │      │                  │      │                        │
-│ extras.json        │─────▶│   build.ps1      │─────▶│  dist/Ninite-Custom.ps1│
+│ extras.json        │─────▶│   build.ps1      │─────▶│  dist/CHRK-Installer.ps1│
 │ names.json         │      │   (+ rete)       │      │  (autocontenuto, GUI)  │
 │ mousefixes.inc     │      │                  │      └────────────────────────┘
 │ assets/logo.png    │      │ ninite.template  │                  │
@@ -16,15 +16,18 @@
         WinUtil catalog      ─┘  (nomi + descrizioni)             Cloudflare s.chrk.tk
 ```
 
-`dist/Ninite-Custom.ps1` non ha dipendenze esterne: catalogo e logo sono **dentro** il file.
+`dist/CHRK-Installer.ps1` non ha dipendenze esterne: catalogo e logo sono **dentro** il file.
 
 ## Il file distribuito
 
 - Parametri CLI (`-Preset`, `-Console`, `-InstallCron`, `-SelfUpdate`, ...).
 - Auto-install: se eseguito in memoria (`irm | iex`), copia se stesso in
-  `%LOCALAPPDATA%\Ninite-Custom\` e si riavvia da li' (serve per cronjob e self-update).
-- GUI WinForms: barra superiore (logo, ricerca, preset, azioni), lista con `GroupBox`
-  per categoria, pannello descrizione a destra, log + progresso in basso.
+  `%LOCALAPPDATA%\CHRK-Installer\` e si riavvia da li' (serve per cronjob e self-update).
+- GUI WinForms: barra superiore (logo, titolo, ricerca, azioni), **rail delle categorie** a
+  sinistra, lista a destra con l'intestazione di ogni categoria (niente `GroupBox`: le voci
+  sono `CheckBox` in un `FlowLayoutPanel` filtrato), pannello descrizione a destra, log +
+  progresso in basso. La sezione **Aggiornamenti automatici** e' una voce del rail e si apre
+  dentro l'area della lista.
 - Motore winget: un processo `winget` per pacchetto, con mappa degli exit code.
 - Motore registro: scrive le curve `SmoothMouseX/YCurve` e le soglie.
 - Cronjob: `Register-ScheduledTask` (per default **non** elevato) + log su file.
@@ -61,8 +64,10 @@ Regole:
 Per i fix mouse (`kind = 'mouse'`) ci sono invece `scale`, `sens`, `x`, `y`, `speed`,
 `t1`, `t2` e `desc`.
 
-`preset` decide chi viene incluso da `-Preset mine|extra` (vedi `Get-Preset`), `kind`
-decide cosa fare quando la voce viene applicata.
+`preset` distingue le app dell'autore (`mine`, da `catalog-mine.json`) dagli extra scelti a
+mano (`extra`, da `extras.json`): la GUI li presenta insieme come un unico preset
+**Consigliati** (`Get-Preset recommended` restituisce l'unione). `kind` decide cosa fare
+quando la voce viene applicata.
 
 ## Categorie
 

@@ -8,18 +8,18 @@ Due pezzi: **l'artefatto su GitHub** e **l'URL corto su Cloudflare** (`s.chrk.tk
 cd <cartella della repo>
 git init -b main
 git add .
-git commit -m "Ninite-Custom v1.0.0"
-git remote add origin https://github.com/cchrkk/ninite-custom.git
+git commit -m "CHRK-Installer v1.0.0"
+git remote add origin https://github.com/cchrkk/chrk-installer.git
 git push -u origin main
 ```
 
 Dopo il push, l'artefatto e' gia' raggiungibile (raw):
 
 ```
-https://raw.githubusercontent.com/cchrkk/ninite-custom/main/dist/Ninite-Custom.ps1
+https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1
 ```
 
-> Il repo **deve** contenere `dist/Ninite-Custom.ps1` (e' il file che viene servito).
+> Il repo **deve** contenere `dist/CHRK-Installer.ps1` (e' il file che viene servito).
 > Non serve GitHub Pages, ma e' un'alternativa valida (vedi in fondo).
 
 ### Release (opzionale ma consigliato)
@@ -49,7 +49,7 @@ Si crea un record DNS fittizio proxato e una Redirect Rule che manda tutto a Git
 **Redirect Rule** (Rules → Overview → Create rule → Redirect rule)
 
 - When: `Hostname` `equals` `s.chrk.tk`
-- Then: Dynamic redirect, Expression `concat("https://raw.githubusercontent.com/cchrkk/ninite-custom/main/dist/Ninite-Custom.ps1")`
+- Then: Dynamic redirect, Expression `concat("https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1")`
 - Status: `302`, spunta *Preserve query string* se ti serve
 - Placement: **First** (o almeno prima delle altre regole che riguardano `s`)
 
@@ -70,7 +70,7 @@ npx wrangler deploy
 `worker/wrangler.toml`:
 
 ```toml
-name = "chrk-ninite"
+name = "chrk-installer"
 main = "index.js"
 compatibility_date = "2026-01-01"
 
@@ -80,7 +80,7 @@ routes = [{ pattern = "s.chrk.tk", custom_domain = true }]
 `worker/index.js`:
 
 ```js
-const RAW = "https://raw.githubusercontent.com/cchrkk/ninite-custom/main/dist/Ninite-Custom.ps1";
+const RAW = "https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1";
 
 export default {
   async fetch(request) {
@@ -149,7 +149,7 @@ Attiva Pages sul branch `main` (cartella `/dist`). Poi `s` puo' puntare direttam
 |---|---|---|---|
 | CNAME | `s` | `cchrkk.github.io` | Proxied |
 
-ma l'URL diventa `https://s.chrk.tk/Ninite-Custom.ps1` (il root servirebbe l'indice).
+ma l'URL diventa `https://s.chrk.tk/CHRK-Installer.ps1` (il root servirebbe l'indice).
 Col redirect del Modo A invece il root va gia' bene.
 
 ## Sicurezza

@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-    Compila dist/Ninite-Custom.ps1 partendo dai dati in build/.
+    Compila dist/CHRK-Installer.ps1 partendo dai dati in build/.
 
 .DESCRIPTION
     Il file distribuito e' autocontenuto: questo script unisce
-      - build/catalog-mine.json   (export winget -> preset "CHRK.")
-      - build/mousefixes.inc      (fix mouse MarkC, gia' estratti)
+      - build/catalog-mine.json   (export winget -> app dell'autore, preset "Consigliati")
+      - build/extras.json         (extra scelti a mano, stesso preset)      - build/mousefixes.inc      (fix mouse MarkC, gia' estratti)
       - build/assets/logo.png     (logo, embeddato in base64)
       - dati online: winstall.app/express (selezione curata + descrizioni)
                      e il catalogo applicazioni di WinUtil (nomi di riserva)
-    dentro build/ninite.template.ps1, producendo dist/Ninite-Custom.ps1.
+    dentro build/chrk-installer.template.ps1, producendo dist/CHRK-Installer.ps1.
 
     Non serve nessuna dipendenza locale oltre a PowerShell 5.1 e a internet.
 
@@ -20,7 +20,7 @@
     URL pubblico che lo script usera' per l'auto-aggiornamento.
 
 .PARAMETER OutFile
-    Percorso di output. Default: dist/Ninite-Custom.ps1
+    Percorso di output. Default: dist/CHRK-Installer.ps1
 
 .EXAMPLE
     .\build\build.ps1
@@ -36,7 +36,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $buildDir = $PSScriptRoot
 $repoDir  = Split-Path -Parent $buildDir
-if (-not $OutFile) { $OutFile = Join-Path $repoDir 'dist\Ninite-Custom.ps1' }
+if (-not $OutFile) { $OutFile = Join-Path $repoDir 'dist\CHRK-Installer.ps1' }
 $enc = [System.Text.UTF8Encoding]::new($false)
 
 function Norm([string]$s) {
@@ -170,7 +170,7 @@ $logoPath = Join-Path $buildDir 'assets\logo.png'
 if (-not (Test-Path $logoPath)) { throw "logo non trovato: $logoPath" }
 $logoB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($logoPath))
 
-$tpl = [System.IO.File]::ReadAllText((Join-Path $buildDir 'ninite.template.ps1'), $enc)
+$tpl = [System.IO.File]::ReadAllText((Join-Path $buildDir 'chrk-installer.template.ps1'), $enc)
 foreach ($ph in @('__PACKAGES__', '__LOGO_B64__', '__VERSION__', '__UPDATE_URL__')) {
     if ($tpl -notmatch $ph) { throw "placeholder $ph non trovato nel template" }
 }
@@ -190,7 +190,7 @@ if ($badChars.Count) {
 
 # ---- 10) resoconto -------------------------------------------------------
 Write-Host ""
-Write-Host ("Ninite-Custom v{0}" -f $Version) -ForegroundColor Cyan
+Write-Host ("CHRK-Installer v{0}" -f $Version) -ForegroundColor Cyan
 Write-Host ("  output    : {0}  ({1} KB)" -f $OutFile, [math]::Round((Get-Item $OutFile).Length / 1KB, 1))
 Write-Host ("  update url: {0}" -f $UpdateUrl)
 Write-Host ("  voci      : {0}  (winstall: {1}, WinUtil: {2})" -f $lines.Count, $win.Count, $catMap.Count)
@@ -199,7 +199,7 @@ foreach ($g in ($all.Values | Group-Object cat | Sort-Object { $catOrder.IndexOf
     Write-Host ("  {0,-24} {1}" -f $g.Name, $g.Count)
 }
 Write-Host ""
-Write-Host ("  preset CHRK.: {0} app | extra: {1} | popolari: {2}" -f `
+Write-Host ("  consigliate: {0} app mie + {1} extra  |  popolari: {2}" -f `
     @($all.Values | Where-Object preset -eq 'mine').Count, `
     @($all.Values | Where-Object preset -eq 'extra').Count, `
     @($all.Values | Where-Object { -not $_.preset }).Count)

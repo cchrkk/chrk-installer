@@ -1,7 +1,7 @@
 # artefatti e log
 *.log
 *.bak
-ninite-update.log
+chrk-update.log
 
 # credenziali (mai committare)
 .cf-token

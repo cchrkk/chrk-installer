@@ -1,25 +1,29 @@
-# Ninite-Custom
+# CHRK Installer
 
-Installer personale in stile **Ninite**, ma con **winget**, piu' una manciata di tweak di
-registro (fix mouse MarkC). Un solo file `.ps1` autocontenuto con GUI.
+Installer personale con **winget** (GUI WinForms), piu' una manciata di tweak di registro
+(fix mouse MarkC). Un solo file `.ps1` autocontenuto.
 
 ```
 irm https://s.chrk.tk | iex
 ```
 
-![Ninite-Custom](build/assets/logo.png)
+![CHRK Installer](build/assets/logo.png)
 
 ## Cosa fa
 
-- **Lista selezionabile** di ~200 app winget, in sezioni con nome, ordinate e con descrizione
-  visibile passando il mouse.
-- **Rileva cosa e' gia' installato** e lo salta (come Ninite).
+- **Rail delle categorie a sinistra** (Browser, Documenti, Sviluppo, Mouse, ...) e lista a
+  destra con le intestazioni di categoria, ricerca e descrizione di ogni voce passando il
+  mouse.
+- **Rileva cosa e' gia' installato** e lo salta (segna le voci come `(gia installato)`).
 - **Avanzamento chiaro**: pacchetto corrente, `n/totale`, percentuale, media per pacchetto,
   ETA ed esito di ogni voce (`OK` / `SKIP` / `FAIL` con motivo).
-- **Preset**: `CHRK.` (i pacchetti dell'autore), `Extra`, `Mouse fix`.
+- **Preset**: `Consigliati` (le app della lista dell'autore + gli extra scelti a mano),
+  `Mouse fix`, `Nessuno`.
+- **Aggiornamento automatico**: sezione dedicata dentro la lista - crea/rimuove il task di
+  Windows che esegue `winget upgrade --all` ogni N giorni all'ora scelta, con lo stato e la
+  prossima esecuzione in chiaro.
 - **Fix mouse MarkC** selezionabili: 1:1 @6/11 per la propria scala DPI (rilevata), emulazioni
   W95/98 e W2K, disattivazione accelerazione su login, ripristino default.
-- **Cronjob**: crea un task di Windows che esegue `winget upgrade --all` ogni N giorni.
 - **Auto-aggiornamento**: `-SelfUpdate` o il pulsante nella GUI.
 
 ## Installazione
@@ -29,33 +33,32 @@ irm https://s.chrk.tk | iex
 irm https://s.chrk.tk | iex
 
 # con preset
-& ([ScriptBlock]::Create((irm 'https://s.chrk.tk'))) -Preset mine
+& ([ScriptBlock]::Create((irm 'https://s.chrk.tk'))) -Preset recommended
 
 # scaricando il file
-irm https://s.chrk.tk -OutFile "$env:USERPROFILE\Ninite-Custom.ps1"
-& "$env:USERPROFILE\Ninite-Custom.ps1"
+irm https://s.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
+& "$env:USERPROFILE\CHRK-Installer.ps1"
 ```
 
 ## Uso da riga di comando
 
 ```powershell
-.\Ninite-Custom.ps1                        # GUI
-.\Ninite-Custom.ps1 -Preset mine           # GUI, preset CHRK.
-.\Ninite-Custom.ps1 -Preset extra
-.\Ninite-Custom.ps1 -Preset mouse          # rileva la scala DPI e preseleziona il fix giusto
-.\Ninite-Custom.ps1 -Console               # elenco completo a console
-.\Ninite-Custom.ps1 -Console -Preset extra -DryRun
-.\Ninite-Custom.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
-.\Ninite-Custom.ps1 -UpgradeAll            # aggiorna tutto (usato dal cronjob)
-.\Ninite-Custom.ps1 -ShowVersion
-.\Ninite-Custom.ps1 -SelfUpdate
-.\Ninite-Custom.ps1 -InstallCron -EveryDays 7 -CronTime 03:00
-.\Ninite-Custom.ps1 -RemoveCron
+.\CHRK-Installer.ps1                        # GUI
+.\CHRK-Installer.ps1 -Preset recommended    # GUI, app consigliate preselezionate
+.\CHRK-Installer.ps1 -Preset mouse          # rileva la scala DPI e preseleziona il fix giusto
+.\CHRK-Installer.ps1 -Console               # elenco completo a console
+.\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
+.\CHRK-Installer.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
+.\CHRK-Installer.ps1 -UpgradeAll            # aggiorna tutto (usato dal cronjob)
+.\CHRK-Installer.ps1 -ShowVersion
+.\CHRK-Installer.ps1 -SelfUpdate
+.\CHRK-Installer.ps1 -InstallCron -EveryDays 7 -CronTime 03:00
+.\CHRK-Installer.ps1 -RemoveCron
 ```
 
 | Parametro | Effetto |
 |---|---|
-| `-Preset mine\|extra\|mouse\|all\|none` | preselezione |
+| `-Preset recommended\|mouse\|all\|none` | preselezione (`mine` e `extra` restano come alias di `recommended`) |
 | `-Select <id,id>` | selezione esplicita |
 | `-Console` | niente GUI |
 | `-DryRun` | non modifica nulla, mostra cosa farebbe |
@@ -69,19 +72,20 @@ irm https://s.chrk.tk -OutFile "$env:USERPROFILE\Ninite-Custom.ps1"
 ## Come e' fatto il repository
 
 ```
-├─ VERSION                  versione corrente (la usa il build)
-├─ dist/Ninite-Custom.ps1   ARTEFATTO pubblicato (autocontenuto, non modificare a mano)
+├─ VERSION                          versione corrente (la usa il build)
+├─ dist/CHRK-Installer.ps1          ARTEFATTO pubblicato (autocontenuto, non modificare a mano)
 ├─ build/
-│  ├─ build.ps1             compila dist/ partendo dai dati sotto
-│  ├─ ninite.template.ps1   sorgente dello script, con i placeholder
-│  ├─ catalog-mine.json     export winget -> preset "CHRK."
-│  ├─ extras.json           pacchetti extra del preset "Extra"
-│  ├─ names.json            nomi/descrizioni manuali di riserva
-│  ├─ mousefixes.inc        fix mouse MarkC gia' estratti
-│  └─ assets/logo.png|svg   logo (png = embeddato)
-├─ docs/                    architettura, pubblicazione, fix mouse
-├─ tools/export-winget.ps1  rigenera catalog-mine.json + lista app manuali
-└─ .github/workflows/       build automatico
+│  ├─ build.ps1                     compila dist/ partendo dai dati sotto
+│  ├─ chrk-installer.template.ps1   sorgente dello script, con i placeholder
+│  ├─ catalog-mine.json             export winget dell'autore -> preset "Consigliati"
+│  ├─ extras.json                   pacchetti extra (sempre nel preset "Consigliati")
+│  ├─ names.json                    nomi/descrizioni manuali di riserva
+│  ├─ mousefixes.inc                fix mouse MarkC gia' estratti
+│  └─ assets/logo.png|svg           logo (png = embeddato)
+├─ docs/                            architettura, pubblicazione, fix mouse
+├─ tools/export-winget.ps1          rigenera catalog-mine.json + lista app manuali
+├─ tools/shots.ps1                  (dev) avvia la GUI e ne salva uno screenshot
+└─ .github/workflows/               build automatico
 ```
 
 Per ricompilare:

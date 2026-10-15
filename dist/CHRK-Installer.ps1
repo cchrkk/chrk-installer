@@ -1,33 +1,35 @@
 <#
-    Ninite-Custom.ps1  -  installer stile Ninite con winget  +  fix mouse MarkC
-    https://github.com/cchrkk/ninite-custom
+    CHRK-Installer.ps1  -  installer winget con GUI  +  fix mouse MarkC
+    https://github.com/cchrkk/chrk-installer
 
     PUBBLICAZIONE / INSTALL DA URL
       Il file e' servito su un URL corto (Cloudflare -> GitHub), quindi basta:
         irm https://s.chrk.tk | iex
       Lo script, se eseguito in memoria, si copia da solo in
-        %LOCALAPPDATA%\Ninite-Custom\Ninite-Custom.ps1
+        %LOCALAPPDATA%\CHRK-Installer\CHRK-Installer.ps1
       e si riavvia da li' (serve per cronjob e auto-aggiornamento).
       Il file e' AUTOCONTENUTO: catalogo e logo sono embeddati, unica dipendenza winget.
 
     FUNZIONI
-      - lista selezionabile di pacchetti winget (i tuoi + extra) e di fix mouse
+      - GUI: rail delle categorie a sinistra, lista con le intestazioni di categoria,
+        pannello descrizione a destra, avanzamento e log in basso
+      - lista selezionabile di pacchetti winget e di fix mouse
       - rileva cio' che e' GIA' installato/applicato e lo salta
       - avanzamento chiaro: pacchetto corrente, n/total, %, ETA, esito per pacchetto
       - "Aggiorna tutto" (winget upgrade --all)
-      - pianifica un aggiornamento automatico (cronjob / Task Scheduler)
+      - aggiornamento automatico: sezione dedicata dentro la lista (Task Scheduler)
       - modalita' console per script e per il cronjob
 
     USO
-        .\Ninite-Custom.ps1                      # GUI
-        .\Ninite-Custom.ps1 -Preset mine         # GUI coi tuoi pacchetti preselezionati
-        .\Ninite-Custom.ps1 -Preset mouse        # GUI coi fix mouse consigliati
-        .\Ninite-Custom.ps1 -Console             # elenco a console
-        .\Ninite-Custom.ps1 -Console -Preset extra -DryRun
-        .\Ninite-Custom.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
-        .\Ninite-Custom.ps1 -UpgradeAll                       # aggiorna tutto (usato dal cronjob)
-        .\Ninite-Custom.ps1 -InstallCron -EveryDays 7 -CronTime 03:00
-        .\Ninite-Custom.ps1 -RemoveCron
+        .\CHRK-Installer.ps1                      # GUI
+        .\CHRK-Installer.ps1 -Preset recommended  # GUI con le app consigliate preselezionate
+        .\CHRK-Installer.ps1 -Preset mouse        # GUI coi fix mouse consigliati
+        .\CHRK-Installer.ps1 -Console             # elenco a console
+        .\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
+        .\CHRK-Installer.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
+        .\CHRK-Installer.ps1 -UpgradeAll                       # aggiorna tutto (usato dal cronjob)
+        .\CHRK-Installer.ps1 -InstallCron -EveryDays 7 -CronTime 03:00
+        .\CHRK-Installer.ps1 -RemoveCron
 
     Logica install ripresa da winutil.ps1 (exit code, msstore, --silent).
     Fix mouse: valori estratti da MarkC Mouse Fix Builder 2.6.
@@ -35,7 +37,8 @@
 [CmdletBinding()]
 param(
     [string[]]$Select,
-    [ValidateSet('mine', 'extra', 'mouse', 'all', 'none')]
+    # mine/extra sono alias storici di recommended
+    [ValidateSet('recommended', 'mine', 'extra', 'mouse', 'all', 'none')]
     [string]$Preset = 'none',
     [switch]$SkipInstalled,
     [switch]$Console,
@@ -54,15 +57,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$TaskName = 'Ninite-Custom Update'
-$script:Version   = '1.0.2'
+$TaskName = 'CHRK-Installer Update'
+$script:Version   = '1.1.0'
 $script:UpdateUrl = 'https://s.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
 if (-not $PSCommandPath -and -not $NoSelfInstall) {
-    $dirDst = Join-Path $env:LOCALAPPDATA 'Ninite-Custom'
-    $dst    = Join-Path $dirDst 'Ninite-Custom.ps1'
-    Write-Host ("Ninite-Custom v{0} - esecuzione in memoria (irm | iex)" -f $script:Version) -ForegroundColor Cyan
+    $dirDst = Join-Path $env:LOCALAPPDATA 'CHRK-Installer'
+    $dst    = Join-Path $dirDst 'CHRK-Installer.ps1'
+    Write-Host ("CHRK-Installer v{0} - esecuzione in memoria (irm | iex)" -f $script:Version) -ForegroundColor Cyan
     Write-Host ("Installo la copia locale in {0}" -f $dst) -ForegroundColor Gray
     Write-Host "Serve per: cronjob, auto-aggiornamento e per non riscaricare tutto ogni volta." -ForegroundColor Gray
     $ok = $false
@@ -376,6 +379,9 @@ function Get-InstalledIds {
 }
 function Get-Preset([string]$name) {
     switch ($name) {
+        'recommended' {
+            return @($Packages | Where-Object { $_.preset -eq 'mine' -or $_.preset -eq 'extra' } | Select-Object -ExpandProperty id)
+        }
         'mine'  { return @($Packages | Where-Object { $_.preset -eq 'mine' } | Select-Object -ExpandProperty id) }
         'extra' { return @($Packages | Where-Object { $_.preset -eq 'extra' } | Select-Object -ExpandProperty id) }
         'mouse' {
@@ -397,13 +403,18 @@ function Test-Admin {
 function Get-CronStatus {
     try { return Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop } catch { return $null }
 }
+function Get-CronLogPath {
+    if ($LogFile) { return $LogFile }
+    if (-not $PSCommandPath) { return 'chrk-update.log' }
+    return (Join-Path (Split-Path $PSCommandPath) 'chrk-update.log')
+}
 function Install-Cron([int]$everyDays, [string]$at, [switch]$elevated) {
     $scriptPath = $PSCommandPath
     if (-not $scriptPath) { throw "Percorso dello script non disponibile (esecuzione in memoria). Salva il file su disco e riprova." }
     if (-not (Test-Path $scriptPath)) { throw "File dello script non trovato: $scriptPath" }
     if ($elevated -and -not (Test-Admin)) { throw "Per un task elevato serve PowerShell come Amministratore. Riprova senza elevazione (consigliato per winget)." }
 
-    $logPath = if ($LogFile) { $LogFile } else { Join-Path (Split-Path $scriptPath) 'ninite-update.log' }
+    $logPath = Get-CronLogPath
     $arg = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -UpgradeAll -LogFile "{1}"' -f $scriptPath, $logPath
     $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg
     $trigger = New-ScheduledTaskTrigger -Daily -At $at -DaysInterval ([Math]::Max(1, $everyDays))
@@ -429,7 +440,7 @@ function Install-Cron([int]$everyDays, [string]$at, [switch]$elevated) {
         try {
             $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType $a.LogonType -RunLevel $a.RunLevel
             Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                -Description 'Aggiorna tutti i pacchetti winget (Ninite-Custom).' -Force -ErrorAction Stop | Out-Null
+                -Description 'Aggiorna tutti i pacchetti winget (CHRK-Installer).' -Force -ErrorAction Stop | Out-Null
             $lastError = $null
             break
         } catch { $lastError = $_ }
@@ -452,7 +463,7 @@ function Get-RemoteVersion {
 function Update-Self {
     if (-not $PSCommandPath) { throw "Esecuzione in memoria: salva prima lo script su disco." }
     $remote = (Invoke-WebRequest -Uri $script:UpdateUrl -UseBasicParsing -ErrorAction Stop).Content
-    if ($remote -notmatch 'Ninite-Custom') { throw "Il file scaricato non sembra Ninite-Custom." }
+    if ($remote -notmatch 'CHRK-Installer') { throw "Il file scaricato non sembra CHRK-Installer." }
     $cur = [System.IO.File]::ReadAllText($PSCommandPath)
     if ($cur -eq $remote) { return "Gia aggiornato (v$($script:Version))." }
     $rv = if ($remote -match "(?m)\`$script:Version\s*=\s*'([^']+)'") { $Matches[1] } else { '?' }
@@ -462,7 +473,7 @@ function Update-Self {
 }
 
 # ==== branch CLI ============================================================
-if ($ShowVersion) { Write-Host ("Ninite-Custom v{0}" -f $script:Version); return }
+if ($ShowVersion) { Write-Host ("CHRK-Installer v{0}" -f $script:Version); return }
 if ($SelfUpdate) {
     try { Write-Host (Update-Self) -ForegroundColor Green } catch { Write-Host ("Errore aggiornamento: " + $_.Exception.Message) -ForegroundColor Red; exit 1 }
     return
@@ -535,225 +546,537 @@ Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 $col = @{
-    bg  = [System.Drawing.ColorTranslator]::FromHtml('#11131a')
-    bg2 = [System.Drawing.ColorTranslator]::FromHtml('#171a23')
-    bg3 = [System.Drawing.ColorTranslator]::FromHtml('#1e222e')
-    fg  = [System.Drawing.ColorTranslator]::FromHtml('#e6e8ee')
-    mut = [System.Drawing.ColorTranslator]::FromHtml('#9aa2b5')
-    acc = [System.Drawing.ColorTranslator]::FromHtml('#4c9aff')
-    ok  = [System.Drawing.ColorTranslator]::FromHtml('#3fb950')
-    warn = [System.Drawing.ColorTranslator]::FromHtml('#d29922')
-    err = [System.Drawing.ColorTranslator]::FromHtml('#f85149')
+    bg    = [System.Drawing.ColorTranslator]::FromHtml('#11131a')
+    bg2   = [System.Drawing.ColorTranslator]::FromHtml('#171a23')
+    bg3   = [System.Drawing.ColorTranslator]::FromHtml('#1e222e')
+    inp   = [System.Drawing.ColorTranslator]::FromHtml('#0d0f15')
+    fg    = [System.Drawing.ColorTranslator]::FromHtml('#e6e8ee')
+    mut   = [System.Drawing.ColorTranslator]::FromHtml('#9aa2b5')
+    acc   = [System.Drawing.ColorTranslator]::FromHtml('#4c9aff')
+    ok    = [System.Drawing.ColorTranslator]::FromHtml('#3fb950')
+    warn  = [System.Drawing.ColorTranslator]::FromHtml('#d29922')
+    err   = [System.Drawing.ColorTranslator]::FromHtml('#f85149')
 }
-$font     = [System.Drawing.Font]::new('Segoe UI', 9, [System.Drawing.FontStyle]::Regular)
-$fontBold = [System.Drawing.Font]::new('Segoe UI', 9, [System.Drawing.FontStyle]::Bold)
-$fontMono = [System.Drawing.Font]::new('Consolas', 8.5, [System.Drawing.FontStyle]::Regular)
+$font      = [System.Drawing.Font]::new('Segoe UI', 9, [System.Drawing.FontStyle]::Regular)
+$fontBold  = [System.Drawing.Font]::new('Segoe UI', 9, [System.Drawing.FontStyle]::Bold)
+$fontTitle = [System.Drawing.Font]::new('Segoe UI', 14, [System.Drawing.FontStyle]::Bold)
+$fontH2    = [System.Drawing.Font]::new('Segoe UI', 10.5, [System.Drawing.FontStyle]::Bold)
+$fontSmall = [System.Drawing.Font]::new('Segoe UI', 8, [System.Drawing.FontStyle]::Regular)
+$fontMono  = [System.Drawing.Font]::new('Consolas', 8.5, [System.Drawing.FontStyle]::Regular)
 
 $form = [System.Windows.Forms.Form]::new()
-$form.Text = 'Ninite Custom (winget) - CHRK.'
-$form.Size = [System.Drawing.Size]::new(1140, 800)
-$form.MinimumSize = [System.Drawing.Size]::new(980, 640)
+$form.Text = 'CHRK Installer  -  winget + fix mouse MarkC'
+$form.Size = [System.Drawing.Size]::new(1200, 840)
+$form.MinimumSize = [System.Drawing.Size]::new(1020, 690)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $col.bg
 $form.ForeColor = $col.fg
 $form.Font = $font
 
-# --- top: logo + controlli ---
-$top = [System.Windows.Forms.Panel]::new()
-$top.Dock = 'Top'; $top.Height = 104; $top.BackColor = $col.bg2
-$form.Controls.Add($top)
+$tip = [System.Windows.Forms.ToolTip]::new()
+$tip.AutoPopDelay = 20000; $tip.InitialDelay = 220; $tip.ReshowDelay = 80
 
-try {
-    $bytes = [Convert]::FromBase64String($LogoB64)
-    $ms = [System.IO.MemoryStream]::new($bytes, $false)
-    $logo = [System.Windows.Forms.PictureBox]::new()
-    $logo.Image = [System.Drawing.Image]::FromStream($ms)
-    $logo.SetBounds(14, 16, 200, 71); $logo.SizeMode = 'Zoom'; $logo.BackColor = $col.bg2
-    $top.Controls.Add($logo)
-} catch { }
-
-$lblTitle = [System.Windows.Forms.Label]::new()
-$lblTitle.Text = 'Seleziona cosa installare  -  i pacchetti gia presenti vengono saltati'
-$lblTitle.SetBounds(228, 8, 450, 18); $lblTitle.ForeColor = $col.mut
-$top.Controls.Add($lblTitle)
-
-$lblVer = [System.Windows.Forms.Label]::new()
-$lblVer.Text = ("v{0}  -  aggiorna script" -f $script:Version)
-$lblVer.SetBounds(694, 8, 300, 18); $lblVer.ForeColor = $col.acc; $lblVer.Cursor = 'Hand'
-$top.Controls.Add($lblVer)
-
-$txtSearch = [System.Windows.Forms.TextBox]::new()
-$txtSearch.SetBounds(228, 30, 220, 24); $txtSearch.BackColor = $col.bg3; $txtSearch.ForeColor = $col.fg; $txtSearch.BorderStyle = 'FixedSingle'
-$top.Controls.Add($txtSearch)
-
-$chkForce = [System.Windows.Forms.CheckBox]::new()
-$chkForce.Text = 'reinstalla se presente'; $chkForce.SetBounds(454, 32, 150, 20); $chkForce.ForeColor = $col.mut
-$top.Controls.Add($chkForce)
-
-$chkOnly = [System.Windows.Forms.CheckBox]::new()
-$chkOnly.Text = 'solo scelti'; $chkOnly.SetBounds(608, 32, 88, 20); $chkOnly.ForeColor = $col.mut
-$top.Controls.Add($chkOnly)
-
-function New-Btn($text, $x, $y, $w, [string]$kind = 'ghost') {
+function New-Label {
+    param([string]$Text, $Fore, [int]$Height = 18, $UseFont = $null)
+    $l = [System.Windows.Forms.Label]::new()
+    $l.Text = $Text; $l.ForeColor = $Fore; $l.AutoSize = $false
+    $l.Height = $Height; $l.TextAlign = 'MiddleLeft'
+    if ($UseFont) { $l.Font = $UseFont }
+    return $l
+}
+function New-Btn {
+    param([string]$Text, [int]$Width, [int]$Height = 28, [string]$Kind = 'ghost')
     $b = [System.Windows.Forms.Button]::new()
-    $b.Text = $text; $b.SetBounds($x, $y, $w, 26); $b.FlatStyle = 'Flat'
+    $b.Text = $Text; $b.FlatStyle = 'Flat'; $b.Height = $Height; $b.Width = $Width
     $b.FlatAppearance.BorderColor = $col.bg3
-    if ($kind -eq 'primary') { $b.BackColor = $col.acc; $b.ForeColor = [System.Drawing.Color]::White }
+    if ($Kind -eq 'primary') { $b.BackColor = $col.acc; $b.ForeColor = [System.Drawing.Color]::White }
     else { $b.BackColor = $col.bg3; $b.ForeColor = $col.fg }
     return $b
 }
+function New-Flow {
+    param([string]$Direction = 'LeftToRight')
+    $f = [System.Windows.Forms.FlowLayoutPanel]::new()
+    $f.FlowDirection = $Direction; $f.WrapContents = $false; $f.AutoSize = $false
+    $f.Margin = [System.Windows.Forms.Padding]::new(0)
+    return $f
+}
 
-$btnInstall = New-Btn 'APPLICA SELEZIONATI' 700 29 180 'primary'
-$btnUpgrade = New-Btn 'Aggiorna tutto' 886 29 140
-$top.Controls.Add($btnInstall); $top.Controls.Add($btnUpgrade)
+# --- barra superiore: logo, titolo, ricerca, azioni -------------------------
+$top = [System.Windows.Forms.Panel]::new()
+$top.Dock = 'Top'; $top.Height = 100; $top.BackColor = $col.bg2
+$top.Padding = [System.Windows.Forms.Padding]::new(12, 10, 12, 10)
 
-$btnMine   = New-Btn 'CHRK.'      228 60 62
-$btnExtra  = New-Btn 'Extra'      294 60 54
-$btnMouse  = New-Btn 'Mouse fix'  352 60 76
-$btnNone   = New-Btn 'Nessuno'    432 60 68
-$btnCron   = New-Btn 'Aggiorna in automatico...' 700 60 180
-$btnSelf   = New-Btn 'Aggiorna script' 886 60 140
-foreach ($b in @($btnMine, $btnExtra, $btnMouse, $btnNone, $btnCron, $btnSelf)) { $top.Controls.Add($b) }
+$topRight = [System.Windows.Forms.Panel]::new()
+$topRight.Dock = 'Right'; $topRight.Width = 348; $topRight.BackColor = $col.bg2
 
-$tip = [System.Windows.Forms.ToolTip]::new()
-$tip.AutoPopDelay = 20000; $tip.InitialDelay = 250; $tip.ReshowDelay = 80
-$tip.SetToolTip($btnMine,  'Riseleziona i pacchetti che avevi su questo PC piu gli extra scelti.')
-$tip.SetToolTip($btnExtra, 'Le app nuove scelte a mano (non ancora installate).')
-$tip.SetToolTip($btnMouse, 'Mouse fix MarkC: toglie l accelerazione del puntatore. Rileva la tua scala DPI.')
-$tip.SetToolTip($btnNone,  'Deseleziona tutto.')
-$tip.SetToolTip($btnCron,  'Crea un aggiornamento automatico: un task di Windows che esegue winget upgrade ogni N giorni.')
-$tip.SetToolTip($btnSelf,  'Riscarica questa ultima versione dello script da internet.')
+$rowBtns = New-Flow 'RightToLeft'
+$rowBtns.Dock = 'Bottom'; $rowBtns.Height = 36; $rowBtns.BackColor = $col.bg2
+$btnInstall = New-Btn 'APPLICA SELEZIONATI' 190 30 'primary'
+$btnUpgrade = New-Btn 'Aggiorna tutto' 140 30
+$btnInstall.Margin = [System.Windows.Forms.Padding]::new(8, 4, 0, 0)
+$btnUpgrade.Margin = [System.Windows.Forms.Padding]::new(8, 4, 0, 0)
+$rowBtns.Controls.Add($btnInstall)
+$rowBtns.Controls.Add($btnUpgrade)
+
+$rowInfo = New-Flow 'RightToLeft'
+$rowInfo.Dock = 'Bottom'; $rowInfo.Height = 22; $rowInfo.BackColor = $col.bg2
+$lblVer = New-Label ("v{0}  -  verifica aggiornamenti" -f $script:Version) $col.acc 18
+$lblVer.AutoSize = $true; $lblVer.Cursor = 'Hand'
+$lblVer.Margin = [System.Windows.Forms.Padding]::new(8, 0, 0, 0)
+$rowInfo.Controls.Add($lblVer)
+
+$topRight.Controls.Add($rowInfo)
+$topRight.Controls.Add($rowBtns)
+
+$logoBox = [System.Windows.Forms.PictureBox]::new()
+$logoBox.Dock = 'Left'; $logoBox.Width = 168; $logoBox.SizeMode = 'Zoom'
+$logoBox.BackColor = $col.bg2
+$logoBox.Padding = [System.Windows.Forms.Padding]::new(0, 8, 14, 8)
+try {
+    $bytes = [Convert]::FromBase64String($LogoB64)
+    $ms = [System.IO.MemoryStream]::new($bytes, $false)
+    $logoBox.Image = [System.Drawing.Image]::FromStream($ms)
+} catch { }
+
+$mid = [System.Windows.Forms.Panel]::new()
+$mid.Dock = 'Fill'; $mid.BackColor = $col.bg2
+
+$titleWrap = [System.Windows.Forms.Panel]::new()
+$titleWrap.Dock = 'Top'; $titleWrap.Height = 50; $titleWrap.BackColor = $col.bg2
+$lblTitle = New-Label 'CHRK Installer' $col.fg 30 $fontTitle
+$lblTitle.Dock = 'Top'
+$lblSub = New-Label 'Installa e aggiorna i programmi con winget. Le voci gia presenti vengono saltate.' $col.mut 18
+$lblSub.Dock = 'Top'
+$titleWrap.Controls.Add($lblSub)
+$titleWrap.Controls.Add($lblTitle)
+
+$searchRow = New-Flow 'LeftToRight'
+$searchRow.Dock = 'Top'; $searchRow.Height = 34; $searchRow.BackColor = $col.bg2
+$txtSearch = [System.Windows.Forms.TextBox]::new()
+$txtSearch.Width = 300; $txtSearch.BackColor = $col.inp; $txtSearch.ForeColor = $col.fg
+$txtSearch.BorderStyle = 'FixedSingle'
+$txtSearch.Margin = [System.Windows.Forms.Padding]::new(0, 5, 12, 0)
+$chkForce = [System.Windows.Forms.CheckBox]::new()
+$chkForce.Text = 'reinstalla se presente'; $chkForce.AutoSize = $true; $chkForce.ForeColor = $col.mut
+$chkForce.Margin = [System.Windows.Forms.Padding]::new(6, 9, 12, 0)
+$chkOnly = [System.Windows.Forms.CheckBox]::new()
+$chkOnly.Text = 'solo selezionati'; $chkOnly.AutoSize = $true; $chkOnly.ForeColor = $col.mut
+$chkOnly.Margin = [System.Windows.Forms.Padding]::new(6, 9, 12, 0)
+$searchRow.Controls.Add($txtSearch)
+$searchRow.Controls.Add($chkForce)
+$searchRow.Controls.Add($chkOnly)
+
+$mid.Controls.Add($searchRow)
+$mid.Controls.Add($titleWrap)
+
+$top.Controls.Add($mid)
+$top.Controls.Add($logoBox)
+$top.Controls.Add($topRight)
+
 $tip.SetToolTip($btnInstall, 'Installa i pacchetti e applica i fix mouse selezionati.')
 $tip.SetToolTip($btnUpgrade, 'Aggiorna TUTTI i programmi installati (winget upgrade --all).')
 $tip.SetToolTip($chkForce, 'Se spuntato, reinstalla anche cio che risulta gia presente.')
-$tip.SetToolTip($chkOnly,  'Mostra solo le voci che hai selezionato.')
+$tip.SetToolTip($chkOnly, 'Mostra solo le voci selezionate.')
+$tip.SetToolTip($lblVer, 'Confronta la tua versione con quella pubblicata su internet.')
 
-$lblScan = [System.Windows.Forms.Label]::new()
-$lblScan.SetBounds(508, 64, 190, 18); $lblScan.ForeColor = $col.mut
-$top.Controls.Add($lblScan)
+# --- rail sinistro: categorie + selezione rapida ---------------------------
+$rail = [System.Windows.Forms.Panel]::new()
+$rail.Dock = 'Left'; $rail.Width = 240; $rail.BackColor = $col.bg2
+$rail.Padding = [System.Windows.Forms.Padding]::new(10, 12, 10, 12)
 
-# --- bottom: avanzamento + log ---
-$bottom = [System.Windows.Forms.Panel]::new()
-$bottom.Dock = 'Bottom'; $bottom.Height = 210; $bottom.BackColor = $col.bg2
-$form.Controls.Add($bottom)
+$lstCats = [System.Windows.Forms.ListBox]::new()
+$lstCats.Dock = 'Fill'; $lstCats.BorderStyle = 'None'; $lstCats.BackColor = $col.bg2
+$lstCats.ForeColor = $col.fg; $lstCats.DrawMode = 'OwnerDrawFixed'; $lstCats.ItemHeight = 26
+$lstCats.IntegralHeight = $false; $lstCats.TabStop = $false
 
-$progress = [System.Windows.Forms.ProgressBar]::new()
-$progress.SetBounds(14, 12, 1096, 16); $progress.Style = 'Continuous'
-$progress.Anchor = 'Top,Left,Right'
-$bottom.Controls.Add($progress)
+$lblCats = New-Label 'CATEGORIE' $col.mut 22 $fontSmall
+$lblCats.Dock = 'Top'
 
-$lblStatus = [System.Windows.Forms.Label]::new()
-$lblStatus.SetBounds(14, 32, 1096, 18); $lblStatus.ForeColor = $col.fg; $lblStatus.Font = $fontBold
-$lblStatus.Anchor = 'Top,Left,Right'
-$bottom.Controls.Add($lblStatus)
+$railFoot = [System.Windows.Forms.Panel]::new()
+$railFoot.Dock = 'Bottom'; $railFoot.Height = 168; $railFoot.BackColor = $col.bg2
 
-$log = [System.Windows.Forms.RichTextBox]::new()
-$log.SetBounds(14, 54, 1096, 148); $log.ReadOnly = $true; $log.ScrollBars = 'Vertical'; $log.WordWrap = $false
-$log.BackColor = [System.Drawing.ColorTranslator]::FromHtml('#0d0f15'); $log.ForeColor = $col.fg; $log.Font = $fontMono
-$log.Anchor = 'Top,Left,Right,Bottom'
-$bottom.Controls.Add($log)
+$footFlow = New-Flow 'TopDown'
+$footFlow.Dock = 'Fill'; $footFlow.BackColor = $col.bg2
+$lblQuick = New-Label 'SELEZIONE RAPIDA' $col.mut 20 $fontSmall
+$lblQuick.Width = 208
+$lblQuick.Margin = [System.Windows.Forms.Padding]::new(0, 10, 0, 2)
+$btnRec = New-Btn 'Consigliati' 212 28
+$btnRec.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 
-# --- pannello descrizione (appare passando il mouse) ---
+$mouseRow = New-Flow 'LeftToRight'
+$mouseRow.Width = 214; $mouseRow.Height = 32
+$btnMouseP = New-Btn 'Mouse fix' 100 28
+$btnMouseP.Margin = [System.Windows.Forms.Padding]::new(0, 1, 6, 1)
+$btnNone = New-Btn 'Nessuno' 100 28
+$btnNone.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+$mouseRow.Controls.Add($btnMouseP)
+$mouseRow.Controls.Add($btnNone)
+
+$lblScan = New-Label 'scansione in corso...' $col.mut 22 $fontSmall
+$lblScan.Width = 212
+$lblScan.Margin = [System.Windows.Forms.Padding]::new(0, 6, 0, 2)
+$btnSelf = New-Btn 'Aggiorna script' 212 26
+$btnSelf.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+
+$footFlow.Controls.Add($lblQuick)
+$footFlow.Controls.Add($btnRec)
+$footFlow.Controls.Add($mouseRow)
+$footFlow.Controls.Add($lblScan)
+$footFlow.Controls.Add($btnSelf)
+
+$rail.Controls.Add($lstCats)
+$rail.Controls.Add($lblCats)
+$rail.Controls.Add($railFoot)
+
+$tip.SetToolTip($btnRec, 'Preseleziona le app consigliate (le mie piu gli extra), saltando quelle gia installate.')
+$tip.SetToolTip($btnMouseP, 'Mouse fix MarkC: toglie l accelerazione del puntatore. Rileva la tua scala DPI.')
+$tip.SetToolTip($btnNone, 'Deseleziona tutto.')
+$tip.SetToolTip($btnSelf, 'Riscarica l ultima versione dello script da internet.')
+
+# --- lista centrale --------------------------------------------------------
+$listHost = [System.Windows.Forms.Panel]::new()
+$listHost.Dock = 'Fill'; $listHost.BackColor = $col.bg
+$listHost.Padding = [System.Windows.Forms.Padding]::new(12, 10, 8, 10)
+
+$flow = [System.Windows.Forms.FlowLayoutPanel]::new()
+$flow.Dock = 'Fill'; $flow.AutoScroll = $true; $flow.FlowDirection = 'TopDown'
+$flow.WrapContents = $false; $flow.BackColor = $col.bg
+$flow.Padding = [System.Windows.Forms.Padding]::new(8, 6, 8, 6)
+
+$listHead = [System.Windows.Forms.Panel]::new()
+$listHead.Dock = 'Top'; $listHead.Height = 30; $listHead.BackColor = $col.bg
+
+$lblCatHead = New-Label 'Tutte le app' $col.fg 28 $fontH2
+$lblCatHead.Dock = 'Fill'
+
+$headRight = New-Flow 'RightToLeft'
+$headRight.Dock = 'Right'; $headRight.Width = 330; $headRight.Height = 28
+$headRight.BackColor = $col.bg
+$chkSelAll = [System.Windows.Forms.CheckBox]::new()
+$chkSelAll.Text = 'seleziona i visibili'; $chkSelAll.AutoSize = $true; $chkSelAll.ForeColor = $col.mut
+$chkSelAll.Margin = [System.Windows.Forms.Padding]::new(10, 6, 0, 0)
+$lblSelCount = New-Label '0 selezionati' $col.mut 28
+$lblSelCount.AutoSize = $true
+$lblSelCount.TextAlign = 'MiddleRight'
+$lblSelCount.Margin = [System.Windows.Forms.Padding]::new(0, 0, 4, 0)
+$headRight.Controls.Add($chkSelAll)
+$headRight.Controls.Add($lblSelCount)
+
+$listHead.Controls.Add($lblCatHead)
+$listHead.Controls.Add($headRight)
+
+# --- sezione "Aggiornamenti automatici" (dentro la lista) ------------------
+$panelUpdates = [System.Windows.Forms.Panel]::new()
+$panelUpdates.Dock = 'Fill'; $panelUpdates.BackColor = $col.bg
+$panelUpdates.Visible = $false
+
+$updFlow = New-Flow 'TopDown'
+$updFlow.Dock = 'Fill'; $updFlow.BackColor = $col.bg
+$updFlow.AutoScroll = $true
+$updFlow.Padding = [System.Windows.Forms.Padding]::new(8, 6, 8, 6)
+
+$lblUpdTitle = New-Label 'Aggiornamento automatico dei programmi' $col.fg 32 $fontH2
+$lblUpdTitle.Width = 640
+$lblUpdTitle.Margin = [System.Windows.Forms.Padding]::new(0, 0, 0, 6)
+$lblUpdDesc = New-Label ("Un task di Windows esegue 'winget upgrade --all' quando vuoi tu." + "`r`n" +
+    'Non serve tenere aperto nulla: se ne occupa Windows, anche a PC appena acceso.' + "`r`n" +
+    'Il log dell esecuzione automatica finisce in un file accanto allo script.') $col.mut 70
+$lblUpdDesc.Width = 660
+$lblUpdDesc.Margin = [System.Windows.Forms.Padding]::new(0, 0, 0, 10)
+
+$chkUpdOn = [System.Windows.Forms.CheckBox]::new()
+$chkUpdOn.Text = 'Mantieni i programmi aggiornati automaticamente'
+$chkUpdOn.AutoSize = $true; $chkUpdOn.ForeColor = $col.fg
+$chkUpdOn.Font = $fontBold
+$chkUpdOn.Margin = [System.Windows.Forms.Padding]::new(0, 2, 0, 10)
+
+$updWhen = New-Flow 'LeftToRight'
+$updWhen.Width = 660; $updWhen.Height = 32
+$lblEvery = New-Label 'Ogni' $col.fg 26
+$lblEvery.Width = 40
+$lblEvery.Margin = [System.Windows.Forms.Padding]::new(6, 3, 4, 0)
+$numDays = [System.Windows.Forms.NumericUpDown]::new()
+$numDays.Minimum = 1; $numDays.Maximum = 60; $numDays.Value = 7; $numDays.Width = 60
+$numDays.BackColor = $col.inp; $numDays.ForeColor = $col.fg
+$numDays.Margin = [System.Windows.Forms.Padding]::new(0, 3, 4, 0)
+$lblDays = New-Label 'giorni, alle' $col.fg 26
+$lblDays.Width = 90
+$lblDays.Margin = [System.Windows.Forms.Padding]::new(0, 3, 4, 0)
+$dtpTime = [System.Windows.Forms.DateTimePicker]::new()
+$dtpTime.Format = 'Custom'; $dtpTime.CustomFormat = 'HH:mm'
+$dtpTime.ShowUpDown = $true; $dtpTime.Width = 110
+try { $dtpTime.Value = [datetime]::Today.AddHours(3) } catch {}
+$dtpTime.Margin = [System.Windows.Forms.Padding]::new(0, 3, 0, 0)
+$updWhen.Controls.Add($lblEvery)
+$updWhen.Controls.Add($numDays)
+$updWhen.Controls.Add($lblDays)
+$updWhen.Controls.Add($dtpTime)
+
+$chkElev = [System.Windows.Forms.CheckBox]::new()
+$chkElev.Text = 'esegui con privilegi elevati (richiede admin, sconsigliato con winget)'
+$chkElev.AutoSize = $true; $chkElev.ForeColor = $col.mut
+$chkElev.Margin = [System.Windows.Forms.Padding]::new(0, 10, 0, 8)
+
+$lblUpdState = New-Label 'Stato: ...' $col.mut 36
+$lblUpdState.Width = 660
+$lblUpdState.Margin = [System.Windows.Forms.Padding]::new(0, 2, 0, 2)
+$lblLogPath = New-Label '' $col.mut 20 $fontSmall
+$lblLogPath.Width = 660
+$lblLogPath.Margin = [System.Windows.Forms.Padding]::new(0, 0, 0, 10)
+
+$updBtns = New-Flow 'LeftToRight'
+$updBtns.Width = 660; $updBtns.Height = 34
+$btnUpdSave = New-Btn 'Salva impostazioni' 170 30 'primary'
+$btnUpdSave.Margin = [System.Windows.Forms.Padding]::new(0, 1, 8, 1)
+$btnUpdRun = New-Btn 'Esegui adesso' 130 30
+$btnUpdRun.Margin = [System.Windows.Forms.Padding]::new(0, 1, 8, 1)
+$btnUpdRefresh = New-Btn 'Ricarica stato' 130 30
+$btnUpdRefresh.Margin = [System.Windows.Forms.Padding]::new(0, 1, 8, 1)
+$updBtns.Controls.Add($btnUpdSave)
+$updBtns.Controls.Add($btnUpdRun)
+$updBtns.Controls.Add($btnUpdRefresh)
+
+$updFlow.Controls.Add($lblUpdTitle)
+$updFlow.Controls.Add($lblUpdDesc)
+$updFlow.Controls.Add($chkUpdOn)
+$updFlow.Controls.Add($updWhen)
+$updFlow.Controls.Add($chkElev)
+$updFlow.Controls.Add($lblUpdState)
+$updFlow.Controls.Add($lblLogPath)
+$updFlow.Controls.Add($updBtns)
+$panelUpdates.Controls.Add($updFlow)
+
+$script:UpdWidth = 0
+$updFlow.Add_Resize({
+    $w = $updFlow.ClientSize.Width - 28
+    if ($w -lt 240) { $w = 240 }
+    if ($w -eq $script:UpdWidth) { return }
+    $script:UpdWidth = $w
+    foreach ($c in @($lblUpdTitle, $lblUpdDesc, $lblUpdState, $lblLogPath, $updWhen, $updBtns)) { $c.Width = $w }
+})
+
+$listHost.Controls.Add($flow)
+$listHost.Controls.Add($panelUpdates)
+$listHost.Controls.Add($listHead)
+
+$tip.SetToolTip($chkUpdOn, 'Crea o rimuove il task di Windows che aggiorna i programmi da solo.')
+$tip.SetToolTip($chkSelAll, 'Spunta tutte le voci visibili in questo momento (ricerca o categoria comprese).')
+
+# --- pannello dettaglio (destra) -------------------------------------------
 $detail = [System.Windows.Forms.Panel]::new()
-$detail.Dock = 'Right'; $detail.Width = 322; $detail.BackColor = $col.bg2
-$form.Controls.Add($detail)
+$detail.Dock = 'Right'; $detail.Width = 330; $detail.BackColor = $col.bg2
+$detail.Padding = [System.Windows.Forms.Padding]::new(16, 14, 16, 14)
 
-$dName = [System.Windows.Forms.Label]::new()
-$dName.SetBounds(14, 14, 294, 46); $dName.ForeColor = $col.fg
-$dName.Font = [System.Drawing.Font]::new('Segoe UI', 10.5, [System.Drawing.FontStyle]::Bold)
-$detail.Controls.Add($dName)
+$dDesc = New-Label '' $col.fg 200
+$dDesc.Dock = 'Fill'
+$dTags = New-Label '' $col.acc 20
+$dTags.Dock = 'Top'
+$dPub = New-Label '' $col.mut 18
+$dPub.Dock = 'Top'
+$dId = New-Label '' $col.acc 18 $fontMono
+$dId.Dock = 'Top'
+$dName = New-Label '' $col.fg 52 $fontH2
+$dName.Dock = 'Top'
+$dLegend = New-Label ("Passa il mouse su una voce per leggerne la descrizione." + "`r`n`r`n" +
+    "Consigliati = le app della mia lista, piu' gli extra scelti a mano." + "`r`n" +
+    'Mouse fix = tweak del puntatore (MarkC).' + "`r`n" +
+    '(gia installato) = verra saltato.') $col.mut 104 $fontSmall
+$dLegend.Dock = 'Bottom'
 
-$dId = [System.Windows.Forms.Label]::new()
-$dId.SetBounds(14, 62, 294, 18); $dId.ForeColor = $col.acc; $dId.Font = $fontMono
-$detail.Controls.Add($dId)
-
-$dPub = [System.Windows.Forms.Label]::new()
-$dPub.SetBounds(14, 82, 294, 18); $dPub.ForeColor = $col.mut
-$detail.Controls.Add($dPub)
-
-$dDesc = [System.Windows.Forms.Label]::new()
-$dDesc.SetBounds(14, 108, 294, 330); $dDesc.ForeColor = $col.fg
 $detail.Controls.Add($dDesc)
-
-$dHint = [System.Windows.Forms.Label]::new()
-$dHint.SetBounds(14, 450, 294, 140); $dHint.ForeColor = $col.mut
-$dHint.Text = ("Passa il mouse su una voce per leggere cosa fa." + "`r`n`r`n" +
-    "CHRK. = quello che era gia sul tuo PC" + "`r`n" +
-    "Extra = app nuove scelte da te" + "`r`n" +
-    "Mouse fix = tweak del puntatore (MarkC)")
-$detail.Controls.Add($dHint)
+$detail.Controls.Add($dTags)
+$detail.Controls.Add($dPub)
+$detail.Controls.Add($dId)
+$detail.Controls.Add($dName)
+$detail.Controls.Add($dLegend)
 
 function Show-Detail($pkg) {
     if (-not $pkg) { return }
     $dName.Text = [string]$pkg.name
     $dId.Text = [string]$pkg.id
     $dPub.Text = if ($pkg.PSObject.Properties['pub'] -and $pkg.pub) { 'di ' + $pkg.pub } else { '' }
+    $tag = [string]$pkg.cat
+    if ($pkg.kind -eq 'mouse') { $tag = 'Mouse fix  -  ' + $tag }
+    elseif ($pkg.preset -eq 'mine' -or $pkg.preset -eq 'extra') { $tag = $tag + '  -  consigliata' }
+    $dTags.Text = $tag
     $dDesc.Text = if ($pkg.PSObject.Properties['desc'] -and $pkg.desc) { [string]$pkg.desc } else { 'Nessuna descrizione disponibile.' }
     if ($pkg.kind -eq 'mouse') { $dDesc.Text = $dDesc.Text + "`r`n`r`n(Scrive le curve SmoothMouseX/Y e le soglie nel registro)" }
-    $dHint.Text = ''
 }
 
-# --- lista ---
-$scroll = [System.Windows.Forms.Panel]::new()
-$scroll.Dock = 'Fill'; $scroll.AutoScroll = $true; $scroll.BackColor = $col.bg
-$form.Controls.Add($scroll); $scroll.BringToFront()
+# --- pannello inferiore: avanzamento + log ---------------------------------
+$bottom = [System.Windows.Forms.Panel]::new()
+$bottom.Dock = 'Bottom'; $bottom.Height = 200; $bottom.BackColor = $col.bg2
+$bottom.Padding = [System.Windows.Forms.Padding]::new(12, 8, 12, 8)
 
-$flow = [System.Windows.Forms.FlowLayoutPanel]::new()
-$flow.Dock = 'Fill'; $flow.AutoScroll = $true; $flow.FlowDirection = 'TopDown'; $flow.WrapContents = $false
-$flow.Padding = [System.Windows.Forms.Padding]::new(10)
-$scroll.Controls.Add($flow)
+$log = [System.Windows.Forms.RichTextBox]::new()
+$log.Dock = 'Fill'; $log.ReadOnly = $true; $log.ScrollBars = 'Vertical'; $log.WordWrap = $false
+$log.BackColor = $col.inp; $log.ForeColor = $col.fg; $log.Font = $fontMono
 
-$script:Checks = [System.Collections.Generic.List[object]]::new()
-$catSeen = [System.Collections.Generic.List[string]]::new()
-foreach ($p in $Packages) { if (-not $catSeen.Contains($p.cat)) { $catSeen.Add($p.cat) } }
-foreach ($cat in $catSeen) {
+$lblStatus = New-Label 'Pronto.' $col.fg 20 $fontBold
+$lblStatus.Dock = 'Top'
+
+$progress = [System.Windows.Forms.ProgressBar]::new()
+$progress.Dock = 'Top'; $progress.Height = 14; $progress.Style = 'Continuous'
+$progress.Visible = $false
+
+$bottom.Controls.Add($log)
+$bottom.Controls.Add($lblStatus)
+$bottom.Controls.Add($progress)
+
+$form.Controls.Add($listHost)
+$form.Controls.Add($detail)
+$form.Controls.Add($rail)
+$form.Controls.Add($bottom)
+$form.Controls.Add($top)
+
+# --- costruzione della lista pacchetti ------------------------------------
+$script:Rows  = [System.Collections.Generic.List[object]]::new()
+$script:Heads = [System.Collections.Generic.List[object]]::new()
+$script:ActiveCat = '*'
+$script:SelAllBusy = $false
+
+$script:CatOrder = @()
+foreach ($p in $Packages) { if ($script:CatOrder -notcontains $p.cat) { $script:CatOrder += $p.cat } }
+
+foreach ($cat in $script:CatOrder) {
     $items = @($Packages | Where-Object { $_.cat -eq $cat })
-    $box = [System.Windows.Forms.GroupBox]::new()
-    $box.Text = ("{0}  ({1})" -f $cat, $items.Count)
-    $box.ForeColor = $col.acc; $box.Font = $fontBold
-    $box.AutoSize = $true; $box.AutoSizeMode = 'GrowAndShrink'
-    $box.Padding = [System.Windows.Forms.Padding]::new(10)
-    $inner = [System.Windows.Forms.FlowLayoutPanel]::new()
-    $inner.FlowDirection = 'TopDown'; $inner.WrapContents = $false; $inner.AutoSize = $true
+    $head = New-Label ('  ' + $cat) $col.acc 26 $fontBold
+    $head.BackColor = $col.bg3
+    $head.Margin = [System.Windows.Forms.Padding]::new(2, 8, 2, 4)
+    $head.Width = 240
+    $flow.Controls.Add($head)
+    $catRows = [System.Collections.Generic.List[object]]::new()
     foreach ($p in $items) {
         $cb = [System.Windows.Forms.CheckBox]::new()
-        $pre = switch ($p.preset) { 'mine' { '[CHRK.] ' } 'extra' { '[extra] ' } default { '' } }
-        $cb.Text = ($pre + [string]$p.name)
-        $cb.Tag = $p; $cb.AutoSize = $true; $cb.ForeColor = $col.fg; $cb.Font = $font
+        $cb.Text = [string]$p.name
+        $cb.AutoSize = $false; $cb.Height = 24; $cb.Width = 240
+        $cb.ForeColor = $col.fg; $cb.Font = $font
+        $cb.Padding = [System.Windows.Forms.Padding]::new(4, 0, 0, 0)
         $cb.Margin = [System.Windows.Forms.Padding]::new(2, 1, 2, 1)
         if ($p.desc) { $tip.SetToolTip($cb, [string]$p.desc) }
-        $cb.Add_MouseEnter({ try { Show-Detail $this.Tag } catch { } })
-        $script:Checks.Add([pscustomobject]@{ cb = $cb; pkg = $p })
-        $inner.Controls.Add($cb)
+        $row = [pscustomobject]@{ cb = $cb; pkg = $p; cat = $cat; head = $head; base = [string]$p.name }
+        $cb.Tag = $row
+        $cb.Add_MouseEnter({ try { Show-Detail $this.Tag.pkg } catch { } })
+        $cb.Add_CheckedChanged({ try { Update-SelCount } catch { } })
+        $catRows.Add($row)
+        $flow.Controls.Add($cb)
     }
-    $box.Controls.Add($inner)
-    $flow.Controls.Add($box)
+    foreach ($r in $catRows) { $script:Rows.Add($r) }
+    $script:Heads.Add([pscustomobject]@{ lbl = $head; cat = $cat; rows = $catRows; count = $items.Count })
 }
 
-# --- stato interno ---
+# --- rail: voci ------------------------------------------------------------
+$railItems = [System.Collections.Generic.List[object]]::new()
+$railItems.Add([pscustomobject]@{ Kind = 'cron'; Cat = $null; Label = 'Aggiornamenti automatici'; Count = -1 })
+$railItems.Add([pscustomobject]@{ Kind = 'all'; Cat = '*'; Label = 'Tutte le app'; Count = $script:Rows.Count })
+foreach ($h in $script:Heads) {
+    $railItems.Add([pscustomobject]@{ Kind = 'cat'; Cat = $h.cat; Label = $h.cat; Count = $h.count })
+}
+foreach ($it in $railItems) { [void]$lstCats.Items.Add($it) }
+
+$lstCats.Add_DrawItem({
+    param($sender, $e)
+    if ($e.Index -lt 0 -or $e.Index -ge $sender.Items.Count) { return }
+    $it = $sender.Items[$e.Index]
+    $sel = (([int]$e.State -band 1) -eq 1)
+    $back = if ($sel) { $col.acc } else { $col.bg2 }
+    $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.fg }
+    if ($it.Kind -eq 'cron') { $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.warn } }
+    if ($it.Kind -eq 'all') { $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.acc } }
+    $brush = [System.Drawing.SolidBrush]::new($back)
+    $e.Graphics.FillRectangle($brush, $e.Bounds)
+    $brush.Dispose()
+    if ($it.Kind -eq 'cron') {
+        $pen = [System.Drawing.Pen]::new($col.bg3)
+        $e.Graphics.DrawLine($pen, $e.Bounds.X + 6, $e.Bounds.Bottom - 2, $e.Bounds.Right - 6, $e.Bounds.Bottom - 2)
+        $pen.Dispose()
+    }
+    $rf = [System.Drawing.RectangleF]::new([single]($e.Bounds.X + 8), [single]$e.Bounds.Y, [single]($e.Bounds.Width - 12), [single]$e.Bounds.Height)
+    $f = if ($it.Kind -eq 'cat') { $font } else { $fontBold }
+    $tb = [System.Drawing.SolidBrush]::new($fore)
+    $e.Graphics.DrawString($it.Label, $f, $tb, $rf)
+    $tb.Dispose()
+    if ($it.Count -ge 0) {
+        $sf = [System.Drawing.StringFormat]::new()
+        $sf.Alignment = 'Far'; $sf.LineAlignment = 'Center'
+        $numCol = if ($sel) { [System.Drawing.Color]::White } else { $col.mut }
+        $cb2 = [System.Drawing.SolidBrush]::new($numCol)
+        $e.Graphics.DrawString([string]$it.Count, $fontSmall, $cb2, $rf, $sf)
+        $cb2.Dispose()
+        $sf.Dispose()
+    }
+})
+$lstCats.SelectedIndex = 1
+
+# --- stato interno ---------------------------------------------------------
 $script:Installed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 $script:Queue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
 $script:Handle = $null; $script:Total = 0; $script:Done = 0
 $script:Ok = 0; $script:Skip = 0; $script:Fail = 0; $script:Start = $null
 $script:CurName = ''
 
-function Apply-Preset([string]$name) {
-    if ($name -eq 'none') { Apply-Filter; return }
-    $want = @(Get-Preset $name)
-    foreach ($c in $script:Checks) {
-        if ($want -notcontains $c.pkg.id) { $c.cb.Checked = $false; continue }
-        if ($c.pkg.kind -eq 'pkg' -and $script:Installed.Contains($c.pkg.id) -and -not $chkForce.Checked) { $c.cb.Checked = $false; continue }
-        $c.cb.Checked = $true
-    }
-    Apply-Filter
+function Update-SelCount {
+    $n = 0
+    foreach ($r in $script:Rows) { if ($r.cb.Checked) { $n++ } }
+    $lblSelCount.Text = ("{0} selezionati" -f $n)
 }
 function Apply-Filter {
     $q = $txtSearch.Text.Trim().ToLower()
-    $only = $chkOnly.Checked
-    foreach ($c in $script:Checks) {
-        $hay = ([string]$c.pkg.name + ' ' + [string]$c.pkg.id + ' ' + [string]$c.pkg.desc).ToLower()
-        $c.cb.Visible = (((-not $q) -or $hay.Contains($q)) -and ((-not $only) -or $c.cb.Checked))
+    $only = [bool]$chkOnly.Checked
+    $cat = $script:ActiveCat
+    $shown = 0
+    # il layout di un FlowLayoutPanel con AutoScroll ricalcola tutto a ogni cambiamento di
+    # Visible: sospenderlo durante il filtro e' cio' che tiene la UI reattiva con 200+ voci
+    $flow.SuspendLayout()
+    try {
+        foreach ($h in $script:Heads) {
+            $vis = 0
+            foreach ($r in $h.rows) {
+                $ok = $true
+                if ($q) {
+                    $hay = ([string]$r.pkg.name + ' ' + [string]$r.pkg.id + ' ' + [string]$r.pkg.desc).ToLower()
+                    $ok = $hay.Contains($q)
+                } elseif ($cat -ne '*' -and $h.cat -ne $cat) {
+                    $ok = $false
+                }
+                if ($ok -and $only -and -not $r.cb.Checked) { $ok = $false }
+                if ($r.cb.Visible -ne $ok) { $r.cb.Visible = $ok }
+                if ($ok) { $vis++; $shown++ }
+            }
+            if ($h.lbl.Visible -ne ($vis -gt 0)) { $h.lbl.Visible = ($vis -gt 0) }
+        }
+    } finally { $flow.ResumeLayout($true) }
+    if ($q) { $lblCatHead.Text = ("Risultati per '{0}'  ({1})" -f $txtSearch.Text.Trim(), $shown) }
+    elseif ($cat -eq '*') { $lblCatHead.Text = ("Tutte le app  ({0})" -f $shown) }
+    else { $lblCatHead.Text = ("{0}  ({1})" -f $cat, $shown) }
+    Update-SelCount
+}
+function Show-Apps {
+    $panelUpdates.Visible = $false
+    $flow.Visible = $true
+    $listHead.Visible = $true
+}
+function Show-Updates {
+    $flow.Visible = $false
+    $listHead.Visible = $false
+    $panelUpdates.Visible = $true
+    Refresh-Cron
+}
+function Apply-Preset([string]$name) {
+    if ($name -eq 'none') {
+        foreach ($r in $script:Rows) { $r.cb.Checked = $false }
+        Apply-Filter
+        return
     }
+    $want = @(Get-Preset $name)
+    foreach ($r in $script:Rows) {
+        if ($want -notcontains $r.pkg.id) { $r.cb.Checked = $false; continue }
+        if ($r.pkg.kind -eq 'pkg' -and $script:Installed.Contains($r.pkg.id) -and -not $chkForce.Checked) { $r.cb.Checked = $false; continue }
+        $r.cb.Checked = $true
+    }
+    if ($txtSearch.Text) { $txtSearch.Text = '' }
+    if ($lstCats.SelectedIndex -ne 1) { $lstCats.SelectedIndex = 1 } else { Show-Apps }
+    Apply-Filter
 }
 function Write-Log([string]$m, $c = $null) {
     $log.SelectionStart = $log.TextLength; $log.SelectionLength = 0
@@ -763,6 +1086,62 @@ function Write-Log([string]$m, $c = $null) {
 }
 function Stamp { (Get-Date -Format 'HH:mm:ss') }
 
+# --- cronjob: interfaccia nella sezione "Aggiornamenti automatici" ---------
+function Refresh-Cron {
+    $st = Get-CronStatus
+    if ($st) {
+        $next = ''
+        try { $next = (Get-ScheduledTaskInfo -TaskName $TaskName).NextRunTime } catch {}
+        $chkUpdOn.Checked = $true
+        $lblUpdState.Text = ("Stato: ATTIVO. Task '{0}', prossima esecuzione: {1}" -f $TaskName, $next)
+        $lblUpdState.ForeColor = $col.ok
+    } else {
+        $chkUpdOn.Checked = $false
+        $lblUpdState.Text = 'Stato: non attivo. Nessun aggiornamento pianificato.'
+        $lblUpdState.ForeColor = $col.mut
+    }
+    $numDays.Enabled = [bool]$chkUpdOn.Checked
+    $dtpTime.Enabled = [bool]$chkUpdOn.Checked
+    $chkElev.Enabled = [bool]$chkUpdOn.Checked
+    $lblLogPath.Text = ('Log del task: ' + (Get-CronLogPath))
+}
+$btnUpdSave.Add_Click({
+    try {
+        if ($chkUpdOn.Checked) {
+            $msg = Install-Cron -everyDays ([int]$numDays.Value) -at $dtpTime.Value.ToString('HH:mm') -elevated:$chkElev.Checked
+        } else {
+            $msg = Remove-Cron
+        }
+        Write-Log ("[{0}] {1}" -f (Stamp), $msg) $col.acc
+        Refresh-Cron
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Aggiornamenti automatici', 'OK', 'Error') | Out-Null
+    }
+})
+$btnUpdRun.Add_Click({
+    try {
+        if (Get-CronStatus) {
+            Start-ScheduledTask -TaskName $TaskName
+            Write-Log ("[{0}] Task '{1}' avviato adesso." -f (Stamp), $TaskName) $col.acc
+        } else {
+            if ([System.Windows.Forms.MessageBox]::Show('Nessun task pianificato. Eseguire winget upgrade --all adesso?', 'Conferma', 'YesNo') -ne 'Yes') { return }
+            Show-Apps
+            $lstCats.SelectedIndex = 1
+            Start-Worker 'upgrade'
+        }
+        Refresh-Cron
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Aggiornamenti automatici', 'OK', 'Error') | Out-Null
+    }
+})
+$btnUpdRefresh.Add_Click({ Refresh-Cron })
+$chkUpdOn.Add_CheckedChanged({
+    $numDays.Enabled = [bool]$chkUpdOn.Checked
+    $dtpTime.Enabled = [bool]$chkUpdOn.Checked
+    $chkElev.Enabled = [bool]$chkUpdOn.Checked
+})
+
+# --- worker (runspace MTA) ------------------------------------------------
 $workerCore = {
     param($MsgQ, $Ids, $Meta, $UpgradeAll)
     function Emit($o) { $MsgQ.Enqueue($o) }
@@ -831,24 +1210,25 @@ function Test-Busy { return [bool]($script:Handle -and -not $script:Handle.IsCom
 function Start-Worker([string]$kind) {
     if (Test-Busy) { return }
     $script:Queue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
-    $ids = @($script:Checks | Where-Object { $_.cb.Checked } | ForEach-Object { $_.pkg.id })
+    $ids = @($script:Rows | Where-Object { $_.cb.Checked } | ForEach-Object { $_.pkg.id })
     $meta = @{}
-    foreach ($c in $script:Checks) {
-        $meta[$c.pkg.id] = @{ name = $c.pkg.name; src = $c.pkg.src; kind = $c.pkg.kind
-            x = $c.pkg.x; y = $c.pkg.y; sens = $c.pkg.sens; speed = $c.pkg.speed; t1 = $c.pkg.t1; t2 = $c.pkg.t2 }
+    foreach ($r in $script:Rows) {
+        $meta[$r.pkg.id] = @{ name = $r.pkg.name; src = $r.pkg.src; kind = $r.pkg.kind
+            x = $r.pkg.x; y = $r.pkg.y; sens = $r.pkg.sens; speed = $r.pkg.speed; t1 = $r.pkg.t1; t2 = $r.pkg.t2 }
     }
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = 'MTA'; $rs.ThreadOptions = 'ReuseThread'; $rs.Open()
     $rs.SessionStateProxy.SetVariable('MsgQ', $script:Queue)
     $ps = [powershell]::Create(); $ps.Runspace = $rs
     if ($kind -eq 'scan') {
-        $allIds = @($script:Checks | Where-Object { $_.pkg.kind -eq 'pkg' } | ForEach-Object { $_.pkg.id })
+        $allIds = @($script:Rows | Where-Object { $_.pkg.kind -eq 'pkg' } | ForEach-Object { $_.pkg.id })
         [void]$ps.AddScript($scanCore).AddArgument($script:Queue).AddArgument($allIds)
         $lblStatus.Text = 'Scansione dei pacchetti installati...'
     }
     else {
         $script:Total = $ids.Count; $script:Done = 0
         $script:Ok = 0; $script:Skip = 0; $script:Fail = 0; $script:Start = Get-Date
+        $progress.Visible = $true
         $progress.Maximum = [Math]::Max($ids.Count, 1); $progress.Value = 0
         [void]$ps.AddScript($workerCore).AddArgument($script:Queue).AddArgument($ids).AddArgument($meta).AddArgument(($kind -eq 'upgrade'))
         $lblStatus.Text = ("Avvio: 0/{0} pacchetti" -f $ids.Count)
@@ -875,29 +1255,33 @@ function Drain-Queue {
                 if ($progress.Maximum -gt 1) { $progress.Value = [Math]::Min($script:Done, $progress.Maximum) }
                 Update-Status
             }
-            'scan' { if ($msg.inst) { $script:Installed.Add($msg.id) } }
+            'scan' { if ($msg.inst) { $null = $script:Installed.Add($msg.id) } }
             'scanDone' {
                 $n = 0
-                foreach ($ch in $script:Checks) {
-                    if ($ch.pkg.kind -eq 'pkg' -and $script:Installed.Contains($ch.pkg.id)) {
-                        $ch.cb.Text = ($ch.cb.Text + '   [gia installato]'); $ch.cb.Checked = $false; $n++
+                foreach ($r in $script:Rows) {
+                    if ($r.pkg.kind -eq 'pkg' -and $script:Installed.Contains($r.pkg.id)) {
+                        $r.cb.Text = ($r.base + '   (gia installato)')
+                        $r.cb.ForeColor = $col.mut
+                        $r.cb.Checked = $false
+                        $n++
                     }
                 }
-                # fix mouse gia applicati
                 $applied = 0
-                foreach ($ch in $script:Checks) {
-                    if ($ch.pkg.kind -ne 'mouse' -or -not $ch.pkg.x) { continue }
-                    if ((Get-CurrentCurveHex 'SmoothMouseXCurve') -eq $ch.pkg.x) {
-                        $ch.cb.Text = ($ch.cb.Text + '   [gia applicato]'); $ch.cb.Checked = $false; $applied++
+                foreach ($r in $script:Rows) {
+                    if ($r.pkg.kind -ne 'mouse' -or -not $r.pkg.x) { continue }
+                    if ((Get-CurrentCurveHex 'SmoothMouseXCurve') -eq $r.pkg.x) {
+                        $r.cb.Text = ($r.base + '   (gia applicato)')
+                        $r.cb.ForeColor = $col.mut
+                        $r.cb.Checked = $false
+                        $applied++
                     }
                 }
-                $lblScan.Text = ("{0} installati | {1} mouse" -f $n, $applied)
+                $lblScan.Text = ("{0} installati | {1} mouse fix attivi" -f $n, $applied)
                 Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse gia applicati. ItemsSize rilevato: {3}%." -f (Stamp), $n, $applied, (Get-CurrentScale)) $col.mut
-                Apply-Preset $Preset
+                if ($Preset -ne 'none') { Apply-Preset $Preset } else { Apply-Filter }
                 $lblStatus.Text = 'Pronto. Seleziona e premi APPLICA SELEZIONATI.'
             }
             'done' {
-                $reboot = ($script:Fail -eq 0 -and $script:Total -gt 0)
                 Write-Log ("[{0}] === FATTO: {1} OK, {2} saltati, {3} falliti ===" -f (Stamp), $script:Ok, $script:Skip, $script:Fail) $col.fg
                 $msg2 = ("Fatto: {0} OK, {1} saltati, {2} falliti" -f $script:Ok, $script:Skip, $script:Fail)
                 if ($script:Ok -gt 0) { $msg2 += ' - logoff/login per i fix mouse' }
@@ -926,84 +1310,31 @@ $timer.Interval = 150
 $timer.Add_Tick({ Drain-Queue })
 $timer.Start()
 
-# --- cronjob dialog ---
-function Show-CronDialog {
-    $d = [System.Windows.Forms.Form]::new()
-    $d.Text = 'Aggiornamento automatico dei programmi'
-    $d.Size = [System.Drawing.Size]::new(520, 400); $d.StartPosition = 'CenterParent'
-    $d.BackColor = $col.bg2; $d.ForeColor = $col.fg; $d.Font = $font; $d.FormBorderStyle = 'FixedDialog'
-    $d.MaximizeBox = $false; $d.MinimizeBox = $false
-
-    $l1 = [System.Windows.Forms.Label]::new(); $l1.Text = 'Frequenza:'; $l1.SetBounds(16, 18, 90, 20); $d.Controls.Add($l1)
-    $cmb = [System.Windows.Forms.ComboBox]::new(); $cmb.DropDownStyle = 'DropDownList'
-    $cmb.SetBounds(110, 15, 200, 24); $cmb.BackColor = $col.bg3; $cmb.ForeColor = $col.fg
-    [void]$cmb.Items.Add('Ogni giorno'); [void]$cmb.Items.Add('Ogni N giorni')
-    $cmb.SelectedIndex = 1; $d.Controls.Add($cmb)
-
-    $l2 = [System.Windows.Forms.Label]::new(); $l2.Text = 'N:'; $l2.SetBounds(330, 18, 20, 20); $d.Controls.Add($l2)
-    $num = [System.Windows.Forms.NumericUpDown]::new(); $num.Minimum = 1; $num.Maximum = 30; $num.Value = 7
-    $num.SetBounds(352, 15, 60, 24); $num.BackColor = $col.bg3; $num.ForeColor = $col.fg; $d.Controls.Add($num)
-
-    $l3 = [System.Windows.Forms.Label]::new(); $l3.Text = 'Ora:'; $l3.SetBounds(16, 56, 90, 20); $d.Controls.Add($l3)
-    $dtp = [System.Windows.Forms.DateTimePicker]::new(); $dtp.Format = 'Time'; $dtp.ShowUpDown = $true
-    $dtp.SetBounds(110, 53, 120, 24)
-    try { $dtp.Value = [datetime]::Today.AddHours(3) } catch {}
-    $d.Controls.Add($dtp)
-
-    $lExplain = [System.Windows.Forms.Label]::new()
-    $lExplain.SetBounds(16, 88, 470, 56); $lExplain.ForeColor = $col.fg
-    $lExplain.Text = ("Windows eseguira' da solo 'winget upgrade --all' ogni volta indicata qua sotto." + "`r`n" +
-        "Non devi tenere aperto nulla: si occupa Windows." + "`r`n" +
-        "Il risultato finisce nel file ninite-update.log accanto allo script.")
-    $d.Controls.Add($lExplain)
-
-    $info = [System.Windows.Forms.Label]::new(); $info.SetBounds(16, 150, 470, 76); $info.ForeColor = $col.mut
-    $d.Controls.Add($info)
-
-    function Refresh-Info {
-        $st = Get-CronStatus
-        $info.Text = if ($st) {
-            "Attivo: '$TaskName'`nStato: $($st.State)`nProssima esecuzione: $((Get-ScheduledTaskInfo -TaskName $TaskName).NextRunTime)"
-        } else { "Nessun aggiornamento pianificato." }
-    }
-    Refresh-Info
-
-    $bCreate = New-Btn 'Attiva aggiornamento' 16 262 150 'primary'
-    $bRun = New-Btn 'Esegui ora' 172 262 100
-    $bDel = New-Btn 'Disattiva' 278 262 90
-    $bClose = New-Btn 'Chiudi' 392 262 80
-    foreach ($b in @($bCreate, $bRun, $bDel, $bClose)) { $d.Controls.Add($b) }
-
-    $chkElev = [System.Windows.Forms.CheckBox]::new()
-    $chkElev.Text = 'esegui con privilegi elevati (richiede admin, sconsigliato per winget)'
-    $chkElev.SetBounds(16, 234, 460, 20); $chkElev.ForeColor = $col.mut
-    $d.Controls.Add($chkElev)
-
-    $bCreate.Add_Click({
-        $days = if ($cmb.SelectedIndex -eq 0) { 1 } else { [int]$num.Value }
-        $at = $dtp.Value.ToString('HH:mm')
-        $num.Enabled = ($cmb.SelectedIndex -eq 1)
-        try { [System.Windows.Forms.MessageBox]::Show((Install-Cron -everyDays $days -at $at -elevated:$chkElev.Checked), 'Pianificato', 'OK', 'Information') | Out-Null }
-        catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Errore', 'OK', 'Error') | Out-Null }
-        Refresh-Info
-    })
-    $bRun.Add_Click({
-        try { Start-ScheduledTask -TaskName $TaskName; [System.Windows.Forms.MessageBox]::Show('Avviato.', 'OK', 'OK', 'Information') | Out-Null }
-        catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Errore', 'OK', 'Error') | Out-Null }
-    })
-    $bDel.Add_Click({ try { [void](Remove-Cron); Refresh-Info } catch { [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Errore', 'OK', 'Error') | Out-Null } })
-    $bClose.Add_Click({ $d.Close() })
-    [void]$d.ShowDialog($form)
-}
-
-# --- eventi ---
+# --- eventi ---------------------------------------------------------------
 $txtSearch.Add_TextChanged({ Apply-Filter })
 $chkOnly.Add_CheckedChanged({ Apply-Filter })
-$btnMine.Add_Click({ Apply-Preset 'mine' })
-$btnExtra.Add_Click({ Apply-Preset 'extra' })
-$btnMouse.Add_Click({ Apply-Preset 'mouse' })
-$btnNone.Add_Click({ foreach ($c in $script:Checks) { $c.cb.Checked = $false }; Apply-Filter })
-$btnCron.Add_Click({ Show-CronDialog })
+$lstCats.Add_SelectedIndexChanged({
+    try {
+        $it = $lstCats.SelectedItem
+        if (-not $it) { return }
+        if ($it.Kind -eq 'cron') { Show-Updates; return }
+        $script:ActiveCat = $it.Cat
+        Show-Apps
+        Apply-Filter
+    } catch { }
+})
+$chkSelAll.Add_CheckedChanged({
+    if ($script:SelAllBusy) { return }
+    $script:SelAllBusy = $true
+    try {
+        $v = [bool]$chkSelAll.Checked
+        foreach ($r in $script:Rows) { if ($r.cb.Visible) { $r.cb.Checked = $v } }
+        $chkSelAll.Checked = $false
+    } finally { $script:SelAllBusy = $false }
+})
+$btnRec.Add_Click({ Apply-Preset 'recommended' })
+$btnMouseP.Add_Click({ Apply-Preset 'mouse' })
+$btnNone.Add_Click({ Apply-Preset 'none' })
 $btnSelf.Add_Click({
     try {
         if ([System.Windows.Forms.MessageBox]::Show("Scaricare l'ultima versione da`n$script:UpdateUrl`n`ne sostituire questo file?", 'Aggiorna script', 'YesNo') -ne 'Yes') { return }
@@ -1024,10 +1355,10 @@ $lblVer.Add_Click({
 })
 $btnInstall.Add_Click({
     if (Test-Busy) { [System.Windows.Forms.MessageBox]::Show('Un lavoro e in corso.') | Out-Null; return }
-    foreach ($c in $script:Checks) {
-        if ($chkForce.Checked -and $c.cb.Text -like '*[installato]*') { $c.cb.Checked = $true }
+    foreach ($r in $script:Rows) {
+        if ($chkForce.Checked -and $r.cb.Text -like '*(installato)*') { $r.cb.Checked = $true }
     }
-    $sel = @($script:Checks | Where-Object { $_.cb.Checked })
+    $sel = @($script:Rows | Where-Object { $_.cb.Checked })
     if (-not $sel.Count) { [System.Windows.Forms.MessageBox]::Show('Nessun elemento selezionato.') | Out-Null; return }
     if ($DryRun) { Write-Log ('DRY-RUN: avrei applicato {0} elementi' -f $sel.Count) $col.warn; return }
     $pk = @($sel | Where-Object { $_.pkg.kind -eq 'pkg' }).Count
@@ -1041,9 +1372,20 @@ $btnUpgrade.Add_Click({
     Write-Log ("[{0}] === AGGIORNA TUTTO (winget upgrade --all) ===" -f (Stamp)) $col.acc
     Start-Worker 'upgrade'
 })
-$cmbCronRefresh = $null
+
+$script:FlowWidth = 0
+$flow.Add_Resize({
+    $w = $flow.ClientSize.Width - 24
+    if ($w -lt 240) { $w = 240 }
+    if ($w -eq $script:FlowWidth) { return }
+    $script:FlowWidth = $w
+    foreach ($c in $flow.Controls) { if ($c.Width -ne $w) { $c.Width = $w } }
+})
+
 $form.Add_Shown({
-    Write-Log ("[{0}] ItemsSize rilevato: {1}%   |   (Ctrl+A non serve, usa i pulsanti di selezione)" -f (Stamp), (Get-CurrentScale)) $col.mut
+    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (Ctrl+A non serve: usa la ricerca e 'seleziona i visibili')" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
+    Refresh-Cron
+    Apply-Filter
     if ($Preset -ne 'none') { Apply-Preset $Preset }
     Start-Worker 'scan'
 })

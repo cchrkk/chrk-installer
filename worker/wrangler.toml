@@ -1,4 +1,4 @@
-name = "chrk-ninite"
+name = "chrk-installer"
 main = "index.js"
 compatibility_date = "2026-01-01"
 

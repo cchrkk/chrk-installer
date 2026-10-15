@@ -9,16 +9,16 @@
 .EXAMPLE
     $env:CF_API_TOKEN = '...'
     .\tools\setup-cloudflare.ps1
-    .\tools\setup-cloudflare.ps1 -Repo ninite-custom -Remove
+    .\tools\setup-cloudflare.ps1 -Repo chrk-installer -Remove
 #>
 [CmdletBinding()]
 param(
     [string]$Zone = 'chrk.tk',
     [string]$Hostname = 's',
     [string]$RepoOwner = 'cchrkk',
-    [string]$Repo = 'ninite-custom',
+    [string]$Repo = 'chrk-installer',
     [string]$Branch = 'main',
-    [string]$Path = 'dist/Ninite-Custom.ps1',
+    [string]$Path = 'dist/CHRK-Installer.ps1',
     [string]$TokenFile,
     [switch]$Remove
 )
@@ -50,7 +50,7 @@ if (-not $z.result.Count) { throw "Zona $Zone non trovata (il token ha accesso a
 $zid = $z.result[0].id
 Write-Host ("Zona {0} ({1})" -f $Zone, $zid) -ForegroundColor Cyan
 
-$ruleDesc = "ninite-custom -> GitHub raw"
+$ruleDesc = "chrk-installer -> GitHub raw"
 $phase = 'http_request_dynamic_redirect'
 
 if ($Remove) {
@@ -71,7 +71,7 @@ $target = "https://raw.githubusercontent.com/$RepoOwner/$Repo/$Branch/$Path"
 
 # --- DNS ---
 $d = Invoke-CF GET "/zones/$zid/dns_records?name=$fqdn"
-$rec = @{ type = 'CNAME'; name = $Hostname; content = "$RepoOwner.github.io"; proxied = $true; ttl = 1; comment = 'ninite-custom' }
+$rec = @{ type = 'CNAME'; name = $Hostname; content = "$RepoOwner.github.io"; proxied = $true; ttl = 1; comment = 'chrk-installer' }
 if ($d.result.Count) {
     Invoke-CF PUT "/zones/$zid/dns_records/$($d.result[0].id)" $rec | Out-Null
     Write-Host "DNS aggiornato: $fqdn -> $RepoOwner.github.io (proxied)" -ForegroundColor Green

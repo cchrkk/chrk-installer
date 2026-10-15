@@ -1,7 +1,7 @@
-// Worker Cloudflare: serve dist/Ninite-Custom.ps1 su https://s.chrk.tk
+// Worker Cloudflare: serve dist/CHRK-Installer.ps1 su https://s.chrk.tk
 // Vedi docs/publishing.md (Modo B).
 
-const RAW = "https://raw.githubusercontent.com/cchrkk/ninite-custom/main/dist/Ninite-Custom.ps1";
+const RAW = "https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1";
 
 export default {
   async fetch() {

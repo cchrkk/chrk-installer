@@ -30,14 +30,14 @@ jobs:
           $v = (Get-Content VERSION -Raw).Trim()
           "version=$v" >> $env:GITHUB_OUTPUT
 
-      - name: Compila dist/Ninite-Custom.ps1
+      - name: Compila dist/CHRK-Installer.ps1
         shell: pwsh
         run: ./build/build.ps1 -Version '${{ steps.v.outputs.version }}'
 
       - name: Controlli
         shell: pwsh
         run: |
-          $f = 'dist/Ninite-Custom.ps1'
+          $f = 'dist/CHRK-Installer.ps1'
           $errs = $null
           [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$errs)
           if ($errs) { $errs | ForEach-Object { Write-Error $_.Message }; exit 1 }
@@ -46,16 +46,16 @@ jobs:
           $bad = @($t.ToCharArray() | Where-Object { [int]$_ -gt 127 })
           if ($bad.Count) { Write-Error "L artefatto contiene $($bad.Count) caratteri non-ASCII"; exit 1 }
 
-          ./dist/Ninite-Custom.ps1 -ShowVersion
-          ./dist/Ninite-Custom.ps1 -Console -Preset mouse -DryRun
+          ./dist/CHRK-Installer.ps1 -ShowVersion
+          ./dist/CHRK-Installer.ps1 -Console -Preset mouse -DryRun
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Ninite-Custom
-          path: dist/Ninite-Custom.ps1
+          name: CHRK-Installer
+          path: dist/CHRK-Installer.ps1
 
       - name: Allega alla release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Ninite-Custom.ps1
+          files: dist/CHRK-Installer.ps1
