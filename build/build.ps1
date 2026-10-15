@@ -58,6 +58,8 @@ if (-not $Version) {
     $vf = Join-Path $repoDir 'VERSION'
     $Version = if (Test-Path $vf) { (Get-Content $vf -Raw).Trim() } else { '0.0.0' }
 }
+# la data di build finisce nell'artefatto e nel titolo della finestra: "chrk.installer - 15/10/2026 v1.4.5"
+$buildDate = (Get-Date).ToString('dd/MM/yyyy', [Globalization.CultureInfo]::InvariantCulture)
 
 # ---- 1) preset "CHRK." (i pacchetti dell'autore) --------------------------
 $catalogMine = Join-Path $buildDir 'catalog-mine.json'
@@ -201,11 +203,11 @@ if (-not (Test-Path $logoPath)) { throw "logo non trovato: $logoPath" }
 $logoB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($logoPath))
 
 $tpl = [System.IO.File]::ReadAllText((Join-Path $buildDir 'chrk-installer.template.ps1'), $enc)
-foreach ($ph in @('__PACKAGES__', '__LOGO_B64__', '__VERSION__', '__UPDATE_URL__')) {
+foreach ($ph in @('__PACKAGES__', '__LOGO_B64__', '__VERSION__', '__BUILDDATE__', '__UPDATE_URL__')) {
     if ($tpl -notmatch $ph) { throw "placeholder $ph non trovato nel template" }
 }
 $out = $tpl.Replace('__PACKAGES__', $body).Replace('__LOGO_B64__', $logoB64).
-    Replace('__VERSION__', $Version).Replace('__UPDATE_URL__', $UpdateUrl)
+    Replace('__VERSION__', $Version).Replace('__BUILDDATE__', $buildDate).Replace('__UPDATE_URL__', $UpdateUrl)
 
 $outDir = Split-Path -Parent $OutFile
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Force -Path $outDir | Out-Null }
@@ -220,7 +222,7 @@ if ($badChars.Count) {
 
 # ---- 10) resoconto -------------------------------------------------------
 Write-Host ""
-Write-Host ("CHRK-Installer v{0}" -f $Version) -ForegroundColor Cyan
+Write-Host ("chrk.installer {0}  -  build del {1}" -f $Version, $buildDate) -ForegroundColor Cyan
 Write-Host ("  output    : {0}  ({1} KB)" -f $OutFile, [math]::Round((Get-Item $OutFile).Length / 1KB, 1))
 Write-Host ("  update url: {0}" -f $UpdateUrl)
 Write-Host ("  voci      : {0}  (winstall: {1}, WinUtil: {2})" -f $lines.Count, $win.Count, $catMap.Count)

@@ -65,13 +65,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
 $script:Version   = '__VERSION__'
+$script:BuildDate = '__BUILDDATE__'
 $script:UpdateUrl = '__UPDATE_URL__'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
 if (-not $PSCommandPath -and -not $NoSelfInstall) {
     $dirDst = Join-Path $env:LOCALAPPDATA 'CHRK-Installer'
     $dst    = Join-Path $dirDst 'CHRK-Installer.ps1'
-    Write-Host ("CHRK-Installer v{0} - esecuzione in memoria (irm | iex)" -f $script:Version) -ForegroundColor Cyan
+    Write-Host ("chrk.installer - {0} v{1} - esecuzione in memoria (irm | iex)" -f $script:BuildDate, $script:Version) -ForegroundColor Cyan
     Write-Host ("Installo la copia locale in {0}" -f $dst) -ForegroundColor Gray
     Write-Host "Serve per: cronjob, auto-aggiornamento e per non riscaricare tutto ogni volta." -ForegroundColor Gray
     $ok = $false
@@ -372,7 +373,7 @@ function Update-Self {
 }
 
 # ==== branch CLI ============================================================
-if ($ShowVersion) { Write-Host ("CHRK-Installer v{0}" -f $script:Version); return }
+if ($ShowVersion) { Write-Host ("chrk.installer - {0} v{1}" -f $script:BuildDate, $script:Version); return }
 if ($SelfUpdate) {
     try { Write-Host (Update-Self) -ForegroundColor Green } catch { Write-Host ("Errore aggiornamento: " + $_.Exception.Message) -ForegroundColor Red; exit 1 }
     return
@@ -483,7 +484,7 @@ $fontSmall = [System.Drawing.Font]::new('Segoe UI', 8, [System.Drawing.FontStyle
 $fontMono  = [System.Drawing.Font]::new('Consolas', 8.5, [System.Drawing.FontStyle]::Regular)
 
 $form = [System.Windows.Forms.Form]::new()
-$form.Text = 'CHRK Installer  -  winget + fix mouse MarkC'
+$form.Text = ("chrk.installer - {0} v{1}" -f $script:BuildDate, $script:Version)
 $form.Size = [System.Drawing.Size]::new(1200, 840)
 $form.MinimumSize = [System.Drawing.Size]::new(1020, 690)
 $form.StartPosition = 'CenterScreen'
@@ -561,7 +562,7 @@ $mid.Dock = 'Fill'; $mid.BackColor = $col.bg2
 
 $titleWrap = [System.Windows.Forms.Panel]::new()
 $titleWrap.Dock = 'Top'; $titleWrap.Height = 50; $titleWrap.BackColor = $col.bg2
-$lblTitle = New-Label 'CHRK Installer' $col.fg 30 $fontTitle
+$lblTitle = New-Label 'chrk.installer' $col.fg 30 $fontTitle
 $lblTitle.Dock = 'Top'
 $lblSub = New-Label 'Installa e aggiorna i programmi con winget. Le voci gia presenti vengono saltate.' $col.mut 18
 $lblSub.Dock = 'Top'
@@ -1243,28 +1244,29 @@ function Drain-Queue {
                         $n++
                     }
                 }
-                $applied = 0
+                $mouseDone = 0
                 foreach ($r in $script:Rows) {
                     if ($r.pkg.kind -ne 'mouse' -or -not $r.pkg.x) { continue }
                     if ((Get-CurrentCurveHex 'SmoothMouseXCurve') -eq $r.pkg.x) {
                         $r.cb.Text = ($r.base + '   (gia applicato)')
                         $r.cb.ForeColor = $col.mut
                         $r.cb.Checked = $false
-                        $applied++
+                        $mouseDone++
                     }
                 }
                 # tweak del registro gia a posto
+                $tweakDone = 0
                 foreach ($r in $script:Rows) {
                     if ($r.pkg.kind -ne 'tweak' -or -not $r.pkg.ops) { continue }
                     if (Test-Ops $r.pkg.ops) {
                         $r.cb.Text = ($r.base + '   (gia applicato)')
                         $r.cb.ForeColor = $col.mut
                         $r.cb.Checked = $false
-                        $applied++
+                        $tweakDone++
                     }
                 }
-                $lblScan.Text = ("{0} installati - {1} fix/tweak applicati" -f $n, $applied)
-                Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse gia applicati. ItemsSize rilevato: {3}%." -f (Stamp), $n, $applied, (Get-CurrentScale)) $col.mut
+                $lblScan.Text = ("{0} installati - {1} mouse - {2} tweak" -f $n, $mouseDone, $tweakDone)
+                Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse e {3} tweak gia applicati. ItemsSize rilevato: {4}%." -f (Stamp), $n, $mouseDone, $tweakDone, (Get-CurrentScale)) $col.mut
                 if ($Preset -ne 'none') { Apply-Preset $Preset } else { Apply-Filter }
                 $lblStatus.Text = 'Pronto. Seleziona e premi APPLICA SELEZIONATI.'
             }
@@ -1384,7 +1386,7 @@ $flow.Add_Resize({
 })
 
 $form.Add_Shown({
-    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (i preset sono nel rail: Consigliati / CHRK. / Extra / Mouse fix; 'Pulisci selezione' azzera le spunte)" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
+    Write-Log ("[{0}] chrk.installer - {1} v{2}   |   scala DPI rilevata: {3}%   |   (i preset sono nel rail: Consigliati / CHRK. / Extra / Mouse fix; 'Pulisci selezione' azzera le spunte)" -f (Stamp), $script:BuildDate, $script:Version, (Get-CurrentScale)) $col.mut
     Refresh-Cron
     Apply-Filter
     if ($Preset -ne 'none') { Apply-Preset $Preset }

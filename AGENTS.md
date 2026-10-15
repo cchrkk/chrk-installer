@@ -42,6 +42,7 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 | `__PACKAGES__` | le righe `@{ id = ...; name = ...; cat = ...; ... }` di tutte le voci |
 | `__LOGO_B64__` | il logo in base64 |
 | `__VERSION__` | la versione (parametro o file `VERSION`) |
+| `__BUILDDATE__` | la data di build in `gg/mm/aaaa` (finisce nel titolo della finestra) |
 | `__UPDATE_URL__` | l'URL pubblico per `-SelfUpdate` (default `https://ez.chrk.tk`) |
 
 ## Vincoli tecnici da rispettare

@@ -3,6 +3,20 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.5] - 2026-10-15
+
+### Cambiato
+- **Titolo della finestra: `chrk.installer - 15/10/2026 v1.4.5`** (nome, data di build e
+  versione). Stessa riga in `-ShowVersion` e nel banner dell'esecuzione in memoria; la data
+  arriva da un nuovo placeholder `__BUILDDATE__` che il build riempie.
+- Titoli della guida: il font Minecraft non ha il grassetto e il browser lo **fingeva**
+  rendendolo obliquo. Ora `font-synthesis:none` + `font-weight:400`: i titoli sono dritti.
+
+### Corretto
+- La scansione diceva "N fix mouse gia applicati" contando anche i tweak: ora separa i due
+  ("106 pacchetti installati, 1 fix mouse e 6 tweak gia applicati"), e il contatore nel rail
+  e' "N installati - M mouse - K tweak".
+
 ## [1.4.4] - 2026-10-15
 
 ### Cambiato
