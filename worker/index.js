@@ -25,6 +25,10 @@ const TIPI = {
   ico: "image/x-icon",
   css: "text/css; charset=utf-8",
   js: "text/javascript; charset=utf-8",
+  ttf: "font/ttf",
+  otf: "font/otf",
+  woff: "font/woff",
+  woff2: "font/woff2",
 };
 
 const CACHE = { cf: { cacheTtl: 300, cacheEverything: true } };

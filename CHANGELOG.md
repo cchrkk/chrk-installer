@@ -3,6 +3,17 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.4] - 2026-10-15
+
+### Cambiato
+- **Guida in stile pixel**: titoli con il font **Minecraft** (`docs/assets/minecraft.ttf`,
+  self-hosted), tutto il resto in **Anonymous Pro**, angoli squadrati e ombre a offset
+  "a blocchi", numeri di sezione e riga tratteggiata dopo i titoli.
+- Il Worker serve anche i font (`/assets/*.ttf` → `font/ttf`).
+
+> Nota: il font Minecraft di dafont e' free for personal use; se in futuro la guida diventa
+> qualcosa di piu' commerciale, l'equivalente libero su Google Fonts e' "Press Start 2P".
+
 ## [1.4.3] - 2026-10-15
 
 ### Cambiato

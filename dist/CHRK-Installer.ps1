@@ -64,7 +64,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.4.3'
+$script:Version   = '1.4.4'
 $script:UpdateUrl = 'https://ez.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
