@@ -1,6 +1,6 @@
 <#
     Ninite-Custom.ps1  -  installer stile Ninite con winget  +  fix mouse MarkC
-    Generato per FISSO-ALI il 2026-10-15.
+    https://github.com/cchrkk/ninite-custom
 
     PUBBLICAZIONE / INSTALL DA URL
       Il file e' servito su un URL corto (Cloudflare -> GitHub), quindi basta:

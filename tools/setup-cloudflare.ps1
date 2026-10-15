@@ -95,8 +95,21 @@ $newRule = @{
     }
 }
 $existing = @()
-try { $existing = @((Invoke-CF GET "/zones/$zid/rulesets/phases/$phase/entrypoint").result.rules) } catch { $existing = @() }
-$rules = @($existing | Where-Object { $_.description -ne $ruleDesc }) + $newRule
+try {
+    $existing = @((Invoke-CF GET "/zones/$zid/rulesets/phases/$phase/entrypoint").result.rules |
+        Where-Object { $_ -and $_.action -and $_.expression })
+} catch { $existing = @() }
+# rimanda solo i campi scrivibili (l'API rifiuta quelli read-only)
+$keep = @()
+foreach ($r in $existing) {
+    if ($r.description -eq $ruleDesc) { continue }
+    $o = [ordered]@{}
+    foreach ($k in @('action', 'description', 'enabled', 'expression', 'action_parameters', 'ref')) {
+        if ($r.PSObject.Properties[$k]) { $o[$k] = $r.$k }
+    }
+    $keep += $o
+}
+$rules = @($keep) + $newRule
 Invoke-CF PUT "/zones/$zid/rulesets/phases/$phase/entrypoint" @{ rules = $rules } | Out-Null
 Write-Host ("Regola redirect: {0} -> {1}" -f $fqdn, $target) -ForegroundColor Green
 

@@ -1,6 +1,6 @@
 <#
     Ninite-Custom.ps1  -  installer stile Ninite con winget  +  fix mouse MarkC
-    Generato per FISSO-ALI il 2026-10-15.
+    https://github.com/cchrkk/ninite-custom
 
     PUBBLICAZIONE / INSTALL DA URL
       Il file e' servito su un URL corto (Cloudflare -> GitHub), quindi basta:
@@ -55,7 +55,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'Ninite-Custom Update'
-$script:Version   = '1.0.0'
+$script:Version   = '1.0.1'
 $script:UpdateUrl = 'https://s.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =

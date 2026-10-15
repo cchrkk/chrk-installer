@@ -3,6 +3,11 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.0.1] - 2026-10-15
+
+### Cambiato
+- Intestazione generica (niente riferimenti alla macchina dell'autore) per la pubblicazione.
+
 ## [1.0.0] - 2026-10-15
 
 ### Aggiunto
