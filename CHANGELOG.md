@@ -3,6 +3,13 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.0.2] - 2026-10-15
+
+### Cambiato
+- Nomi e descrizioni puliti per i pacchetti senza metadati (Android Studio, Arduino IDE,
+  .NET Runtime/SDK, Windows App Runtime, Fedora Media Writer, ecc.).
+- `Microsoft.Office` spostato in Documenti.
+
 ## [1.0.1] - 2026-10-15
 
 ### Cambiato
