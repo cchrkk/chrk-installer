@@ -3,6 +3,15 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.0] - 2026-10-15
+
+### Cambiato
+- **La GUI parte con le app consigliate gia' spuntate** (le 17 della guida EZ): su un PC
+  nuovo apri e premi `APPLICA SELEZIONATI`. Gia' installate restano escluse come sempre.
+  Per aprire senza preselezione: `-Preset none`.
+- In console la preselezione si applica **solo se la chiedi** (`-Preset ...` o `-Select ...`):
+  un `-Console` secco continua a stampare solo il catalogo.
+
 ## [1.3.0] - 2026-10-15
 
 ### Cambiato

@@ -13,6 +13,8 @@ irm https://s.chrk.tk | iex
 
 ## Cosa fa
 
+- **All'avvio la GUI preseleziona le app consigliate** (la base della guida
+  [x.chrk.tk/ez](https://x.chrk.tk/ez)): su un PC nuovo premi solo `APPLICA SELEZIONATI`.
 - **Rail delle categorie a sinistra** (Browser, Documenti, Sviluppo, Mouse, ...) e lista a
   destra con le intestazioni di categoria, ricerca e descrizione di ogni voce passando il
   mouse.
@@ -63,10 +65,11 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 ## Uso da riga di comando
 
 ```powershell
-.\CHRK-Installer.ps1                        # GUI
-.\CHRK-Installer.ps1 -Preset recommended    # GUI, app consigliate preselezionate
+.\CHRK-Installer.ps1                        # GUI, con le app consigliate gia' spuntate
+.\CHRK-Installer.ps1 -Preset none           # GUI senza preselezione
+.\CHRK-Installer.ps1 -Preset mine           # GUI con la mia lista
 .\CHRK-Installer.ps1 -Preset mouse          # rileva la scala DPI e preseleziona il fix giusto
-.\CHRK-Installer.ps1 -Console               # elenco completo a console
+.\CHRK-Installer.ps1 -Console               # solo elenco, non installa niente
 .\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
 .\CHRK-Installer.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
 .\CHRK-Installer.ps1 -UpgradeAll            # aggiorna tutto (usato dal cronjob)
@@ -78,7 +81,7 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 
 | Parametro | Effetto |
 |---|---|
-| `-Preset recommended\|ez\|mine\|extra\|mouse\|all\|none` | preselezione (`recommended` e `ez` = base consigliata; `mine` = lista dell'autore; `extra` = extra) |
+| `-Preset recommended\|ez\|mine\|extra\|mouse\|all\|none` | preselezione (default della GUI: `recommended`; in console si applica solo se lo passi esplicitamente) |
 | `-Select <id,id>` | selezione esplicita |
 | `-Console` | niente GUI |
 | `-DryRun` | non modifica nulla, mostra cosa farebbe |

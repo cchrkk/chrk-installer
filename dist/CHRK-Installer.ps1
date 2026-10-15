@@ -12,20 +12,22 @@
 
     FUNZIONI
       - GUI: rail delle categorie a sinistra, lista con le intestazioni di categoria,
-        pannello descrizione a destra, avanzamento e log in basso
+        pannello descrizione a destra, avanzamento e log in basso.
+        All'avvio preseleziona da sola le app consigliate (la base della guida EZ).
       - lista selezionabile di pacchetti winget e di fix mouse
       - rileva cio' che e' GIA' installato/applicato e lo salta
       - avanzamento chiaro: pacchetto corrente, n/total, %, ETA, esito per pacchetto
       - "Aggiorna tutto" (winget upgrade --all)
+      - tweak di Windows e wizard (MAS, WinUtil) nella lista
       - aggiornamento automatico: sezione dedicata dentro la lista (Task Scheduler)
       - modalita' console per script e per il cronjob
 
     USO
-        .\CHRK-Installer.ps1                      # GUI
-        .\CHRK-Installer.ps1 -Preset recommended  # GUI con la base consigliata preselezionata
+        .\CHRK-Installer.ps1                      # GUI, app consigliate preselezionate
+        .\CHRK-Installer.ps1 -Preset none         # GUI senza preselezione
         .\CHRK-Installer.ps1 -Preset mine         # GUI con la mia lista
         .\CHRK-Installer.ps1 -Preset mouse        # GUI coi fix mouse consigliati
-        .\CHRK-Installer.ps1 -Console             # elenco a console
+        .\CHRK-Installer.ps1 -Console             # elenco completo a console, non installa
         .\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
         .\CHRK-Installer.ps1 -Select 'Git.Git','mouse-1to1-100' -Console
         .\CHRK-Installer.ps1 -UpgradeAll                       # aggiorna tutto (usato dal cronjob)
@@ -39,8 +41,11 @@
 param(
     [string[]]$Select,
     # recommended/ez = base della guida EZ | mine = la mia lista | extra = scelte a mano
+    # La GUI parte con 'recommended' preselezionato; in console il preset si applica solo
+    # se lo chiedi esplicitamente (-Preset ... oppure -Select ...), cosi' un -Console secco
+    # resta innocuo e stampa solo il catalogo.
     [ValidateSet('recommended', 'ez', 'mine', 'extra', 'mouse', 'all', 'none')]
-    [string]$Preset = 'none',
+    [string]$Preset = 'recommended',
     [switch]$SkipInstalled,
     [switch]$Console,
     [switch]$DryRun,
@@ -59,7 +64,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.3.0'
+$script:Version   = '1.4.0'
 $script:UpdateUrl = 'https://s.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
@@ -633,7 +638,7 @@ if ($Console -or $UpgradeAll) {
         return
     }
 
-    $chosen = if ($Select) { $Select } elseif ($Preset -ne 'none') { Get-Preset $Preset } else { @() }
+    $chosen = if ($Select) { $Select } elseif ($PSBoundParameters.ContainsKey('Preset')) { Get-Preset $Preset } else { @() }
     if (-not $chosen.Count) {
         Write-Host 'Nessun pacchetto selezionato. Usa -Select oppure -Preset.' -ForegroundColor Yellow
         Write-Host ''
