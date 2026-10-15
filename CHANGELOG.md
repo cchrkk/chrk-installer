@@ -3,6 +3,24 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.3.0] - 2026-10-15
+
+### Cambiato
+- **I wizard si aprono da soli, senza incollare niente.** Invece del comando `irm <url> | iex`
+  (che Defender blocca perche' e' la firma tipica dei malware) l'installer scarica il
+  **file ufficiale** del progetto e lo esegue da amministratore:
+  - **MAS**: `MAS_AIO.cmd` dal repo `massgravel/Microsoft-Activation-Scripts`
+    (`MAS/All-In-One-Version-KL/`, il file autosufficiente che la loro guida chiama
+    "Method 2 - Traditional"), 744 KB;
+  - **WinUtil**: `winutil.ps1` dall'ultima release di `ChrisTitusTech/winutil`, 928 KB.
+  I file finiscono in `%LOCALAPPDATA%\CHRK-Installer\wizard\` e vengono riscaricati a ogni
+  uso (cosi' hai sempre l'ultima versione).
+- Se il download fallisce o Defender mette il file in quarantena, si ripiega da solo sul
+  comando negli appunti (PowerShell da amministratore, Ctrl+V e Invio).
+- Campi nuovi delle voci `kind = 'cmd'` in `build/tweaks.inc`: `url`, `file`, `runner`
+  (`cmd` o `ps1`) e `switches`. Con `switches = '/HWID /S'` MAS partirebbe in modalita'
+  non assistita.
+
 ## [1.2.1] - 2026-10-15
 
 ### Corretto

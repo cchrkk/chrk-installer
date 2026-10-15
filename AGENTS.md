@@ -79,11 +79,15 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
    cancellazione. I campi di un'op si leggono sempre con `Get-OpField` (che usa
    `Contains()`/`PSObject.Properties`), mai con `$op.<campo>`.
    **Trappola 2 (wizard)**: passare `irm <url> | iex` sulla riga di comando (`-Command "..."`)
-   fa scattare Defender, che lo blocca; digitato a mano passa. Per questo il comando finisce
-   negli appunti e la finestra va aperta *senza* argomenti: `Start-Process -Verb RunAs`
-   passa da ShellExecute e **non eredita le variabili d'ambiente**. Incollare noi i tasti
-   non funziona comunque: verso una finestra elevata `SendKeys`/`SendInput` viene bloccato
-   dal sistema (UIPI) perche' il nostro processo non e' elevato.
+   fa scattare Defender, che lo blocca; digitato a mano passa. Per questo le voci `cmd` con
+   `url` + `file` usano la strada "tradizionale": si scarica il file ufficiale del progetto
+   (`MAS_AIO.cmd`, `winutil.ps1`) in `%LOCALAPPDATA%\CHRK-Installer\wizard\` e lo si esegue
+   con `cmd /c` o `powershell -File`, senza `irm` ne' `iex` da nessuna parte. Senza `url`
+   resta il ripiego: comando negli appunti + PowerShell da amministratore.
+   Non provare a incollare i tasti da soli: verso una finestra elevata `SendKeys`/`SendInput`
+   viene bloccato dal sistema (UIPI) perche' il nostro processo non e' elevato. E
+   `Start-Process -Verb RunAs` passa da ShellExecute, che **non eredita le variabili
+   d'ambiente**: passare il comando per variabile non funziona.
 
 ## La GUI, in breve
 
@@ -172,6 +176,11 @@ virgola finale.
 # wizard: comando aperto in una finestra PowerShell elevata
 @{ id = 'wizard-x'; name = '...'; cat = 'Wizard e script'; preset = ''; guida = '1'; kind = 'cmd';
    cmd = 'irm https://esempio | iex'; desc = '...' }
+
+# wizard che si scarica il file ufficiale e lo esegue (niente irm | iex: Defender lo blocca)
+@{ id = 'wizard-y'; name = '...'; cat = 'Wizard e script'; preset = ''; guida = '1'; kind = 'cmd';
+   cmd = 'irm https://esempio | iex';           # ripiego, messo negli appunti
+   url = 'https://esempio/file.cmd'; file = 'file.cmd'; runner = 'cmd'; switches = ''; desc = '...' }
 ```
 
 `remove = 1` cancella il valore (riporta il default di Windows), utile per la voce

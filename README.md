@@ -30,10 +30,11 @@ irm https://s.chrk.tk | iex
   Esplora file su "Questo PC", barra senza widget/chat/visualizzazione attivita, niente
   ricerca Bing, Copilot spento, niente suggerimenti e pubblicita in Start e Impostazioni,
   piu' una voce che **ripristina i valori originali**.
-- **Wizard e script**: MAS (attivazione Windows/Office) e WinUtil (debloat) si aprono in una
-  PowerShell **da amministratore** col comando gia' negli appunti: Ctrl+V e Invio. Il comando
-  non si passa sulla riga di comando perche' Defender blocca la firma `irm <url> | iex`
-  (digitata a mano invece passa).
+- **Wizard e script**: **MAS** (attivazione Windows/Office) e **WinUtil** (debloat) si aprono
+  da soli in una finestra da amministratore: l'installer scarica il file ufficiale del
+  progetto (`.cmd` di MAS, `winutil.ps1` di WinUtil) e lo esegue. Nessun `irm <url> | iex`
+  sulla riga di comando, che e' la firma che Defender blocca; se il download non riesce,
+  ripiega sul comando negli appunti (Ctrl+V e Invio).
 - **Fix mouse MarkC** selezionabili: 1:1 @6/11 per la propria scala DPI (rilevata), emulazioni
   W95/98 e W2K, disattivazione accelerazione su login, ripristino default.
 - **Auto-aggiornamento**: `-SelfUpdate` o il pulsante nella GUI.

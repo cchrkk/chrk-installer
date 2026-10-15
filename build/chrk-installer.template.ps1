@@ -180,12 +180,57 @@ function Test-Ops([object]$ops) {
 # malware e Defender la blocca: digitato a mano invece passa) e non lo incolliamo noi:
 # i tasti non arrivano a una finestra elevata da un processo non elevato (UIPI), e
 # comunque l'incolla manuale e' esattamente il flusso che funziona.
-function Start-Wizard([string]$cmd, [switch]$DryRun) {
-    if ($DryRun) { Write-Host ("DRY   aprirei una PowerShell da amministratore e copierei: " + $cmd) -ForegroundColor DarkGray; return $true }
+# I wizard (MAS, WinUtil) si aprono come li apriresti tu. Due strade:
+#   1) "tradizionale": si scarica il FILE ufficiale del progetto (MAS_AIO.cmd, winutil.ps1)
+#      e lo si esegue in una finestra da amministratore. Nessun 'irm <url> | iex' da nessuna
+#      parte, che e' la firma che fa scattare Defender.
+#   2) ripiego, se il file non si scarica o Defender lo mette in quarantena: si apre una
+#      PowerShell da amministratore col comando negli appunti (Ctrl+V e Invio).
+# I campi della voce: cmd (comando da incollare), url + file (file da scaricare),
+# runner (cmd|ps1), switches (parametri, es. '/HWID /S' per MAS in modalita' non assistita).
+function Get-WizardDir {
+    $d = Join-Path $env:LOCALAPPDATA 'CHRK-Installer\wizard'
+    if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+    return $d
+}
+function Get-WizField($pkg, [string]$field) {
+    if ($pkg -and $pkg.PSObject.Properties[$field]) { return [string]$pkg.PSObject.Properties[$field].Value }
+    return ''
+}
+function Start-Wizard($pkg, [switch]$DryRun) {
+    $cmd      = Get-WizField $pkg 'cmd'
+    $url      = Get-WizField $pkg 'url'
+    $nomeFile = Get-WizField $pkg 'file'
+    $runner   = Get-WizField $pkg 'runner'
+    $switches = Get-WizField $pkg 'switches'
+    if (-not $runner) { $runner = 'cmd' }
+    if ($DryRun) {
+        if ($url) { Write-Host ("DRY   scaricherei {0} e lo eseguirei con {1}" -f $url, $runner) -ForegroundColor DarkGray }
+        else { Write-Host ("DRY   aprirei una PowerShell da amministratore e copierei: " + $cmd) -ForegroundColor DarkGray }
+        return 'file'
+    }
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
-    try { [System.Windows.Forms.Clipboard]::SetText($cmd) } catch { }
-    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList '-NoExit' | Out-Null
-    return $true
+    if ($cmd) { try { [System.Windows.Forms.Clipboard]::SetText($cmd) } catch { } }
+    if ($url -and $nomeFile) {
+        $path = Join-Path (Get-WizardDir) $nomeFile
+        try { Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing -ErrorAction Stop } catch { }
+        if ((Test-Path $path) -and ((Get-Item $path).Length -gt 1000)) {
+            $arex = ''
+            if ($switches) { $arex = ' ' + $switches }
+            if ($runner -eq 'ps1') {
+                Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList `
+                    '-ExecutionPolicy', 'Bypass', '-File', ('"' + $path + '"' + $arex) | Out-Null
+            } else {
+                Start-Process -FilePath 'cmd.exe' -Verb RunAs -ArgumentList '/c', ('"' + $path + '"' + $arex) | Out-Null
+            }
+            return 'file'
+        }
+    }
+    if ($cmd) {
+        Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList '-NoExit' | Out-Null
+        return 'clip'
+    }
+    return 'fail'
 }
 function Get-CurrentCurveHex([string]$name) {
     try {
@@ -382,10 +427,11 @@ if ($Console -or $UpgradeAll) {
         if ($pkg.kind -eq 'cmd') {
             Write-Host (".... {0}" -f $pkg.name) -ForegroundColor Gray -NoNewline
             try {
-                $okWiz = Start-Wizard $pkg.cmd -DryRun:$DryRun
+                $esito = Start-Wizard $pkg -DryRun:$DryRun
                 if ($DryRun) { Write-Host ("`rDRY   {0,-40} wizard" -f $pkg.name) -ForegroundColor DarkGray }
-                elseif ($okWiz) { Write-Host ("`rOK    {0,-40} PowerShell aperta: incolla con Ctrl+V e premi Invio" -f $pkg.name) -ForegroundColor Green; $ok++ }
-                else { Write-Host ("`rFAIL  {0,-40} finestra non comparsa" -f $pkg.name) -ForegroundColor Red; $fail++ }
+                elseif ($esito -eq 'file') { Write-Host ("`rOK    {0,-40} file ufficiale scaricato e avviato (amministratore)" -f $pkg.name) -ForegroundColor Green; $ok++ }
+                elseif ($esito -eq 'clip') { Write-Host ("`rOK    {0,-40} scarico fallito: incolla con Ctrl+V e premi Invio" -f $pkg.name) -ForegroundColor Yellow; $ok++ }
+                else { Write-Host ("`rFAIL  {0,-40} nulla da avviare" -f $pkg.name) -ForegroundColor Red; $fail++ }
             }
             catch { Write-Host ("`rFAIL  {0,-40} {1}" -f $pkg.name, $_.Exception.Message) -ForegroundColor Red; $fail++ }
             continue
@@ -1302,13 +1348,16 @@ $btnInstall.Add_Click({
     foreach ($r in @($sel | Where-Object { $_.pkg.kind -eq 'cmd' })) {
         Write-Log ("[{0}] > {1}" -f (Stamp), $r.pkg.name) $col.acc
         try {
-            if (Start-Wizard $r.pkg.cmd -DryRun:$DryRun) {
-                Write-Log ("[{0}]   OK    PowerShell da amministratore aperta: incolla con Ctrl+V e premi Invio. Comando: {1}" -f (Stamp), $r.pkg.cmd) $col.ok
+            $esito = Start-Wizard $r.pkg -DryRun:$DryRun
+            if ($esito -eq 'file') {
+                Write-Log ("[{0}]   OK    file ufficiale scaricato e avviato in una finestra da amministratore" -f (Stamp)) $col.ok
+            } elseif ($esito -eq 'clip') {
+                Write-Log ("[{0}]   OK    non ho potuto scaricare il file: PowerShell da amministratore aperta, incolla con Ctrl+V e premi Invio. Comando: {1}" -f (Stamp), $r.pkg.cmd) $col.warn
             } else {
-                Write-Log ("[{0}]   FAIL  finestra non comparsa: apri una PowerShell da amministratore e incolla (Ctrl+V, Invio). Comando: {1}" -f (Stamp), $r.pkg.cmd) $col.err
+                Write-Log ("[{0}]   FAIL  nulla da avviare: comando = '{1}'" -f (Stamp), $r.pkg.cmd) $col.err
             }
         } catch {
-            Write-Log ("[{0}]   FAIL  {1}  -  comando: {2}" -f (Stamp), $_.Exception.Message, $r.pkg.cmd) $col.err
+            Write-Log ("[{0}]   FAIL  {1}" -f (Stamp), $_.Exception.Message) $col.err
         }
     }
     Start-Worker 'install'
