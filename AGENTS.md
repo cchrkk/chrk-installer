@@ -28,6 +28,7 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 | `build/extras.json` | array di id winget | preset `Extra` (`preset = 'extra'`) |
 | `build/names.json` | mappa `id minuscolo → {name, desc}` | usata quando winstall/WinUtil non hanno il pacchetto |
 | `build/mousefixes.inc` | righe letterali dei fix mouse | generato da MarkC, vedi `docs/mousefixes.md` |
+| `build/tweaks.inc` | righe letterali dei tweak di Windows e dei wizard | `kind = 'tweak'` (registro) e `kind = 'cmd'` (MAS, WinUtil) |
 | `build/assets/logo.png` | logo | embeddato in base64 nel build |
 | `tools/export-winget.ps1` | rigenera `catalog-mine.json` | da lanciare sul PC dell'autore |
 | `tools/shots.ps1` | (dev) avvia la GUI e salva uno screenshot | per controllare la resa della UI |
@@ -66,6 +67,16 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 7. **La lista pacchetti segue `$catOrder`.** In `chrk-installer.template.ps1` l'ordine delle
    sezioni e delle voci nel rail e' l'ordine in cui compaiono in `$Packages` (cioe' quello
    deciso da `$catOrder` in `build.ps1`). Non riordinare a mano nella GUI.
+8. **Non tutte le voci sono app.** Il campo `kind` decide cosa fa `APPLICA`:
+   `pkg` = `winget install`, `mouse` = curve MarkC, `tweak` = valori di registro (`ops`,
+   vedi `build/tweaks.inc`), `cmd` = un comando aperto in una finestra PowerShell **elevata**
+   (`MAS`, `WinUtil`). `tweak` e `cmd` vivono in `build/tweaks.inc`, righe letterali come i
+   fix mouse; nel rail le sezioni non-app (Aggiornamenti automatici, Mouse, Tweaks di Windows,
+   Wizard e script) stanno in cima, separate da una riga.
+   **Trappola**: su una hashtable `$op.remove` **non e' `$null`**, e' il metodo `Remove()`
+   della hashtable, quindi e' sempre "vero" e il tweak verrebbe trattato come una
+   cancellazione. I campi di un'op si leggono sempre con `Get-OpField` (che usa
+   `Contains()`/`PSObject.Properties`), mai con `$op.<campo>`.
 
 ## La GUI, in breve
 
@@ -139,6 +150,26 @@ Su un PC con le app installate:
 
 Poi ricompila. Lo script aggiorna `build/catalog-mine.json` e produce una lista di app non
 reinstallabili via winget (`apps-manuali.md`).
+
+### Aggiungere un tweak o un wizard
+
+Sono righe letterali in `build/tweaks.inc` (come i fix mouse): una entry per riga, senza
+virgola finale.
+
+```powershell
+# tweak: uno o piu' valori di registro
+@{ id = 'tweak-x'; name = '...'; cat = 'Tweaks di Windows'; preset = ''; guida = '1'; kind = 'tweak';
+   ops = @( @{ path = 'HKCU:\Software\...'; name = 'Valore'; type = 'DWord'; value = 0 },
+            @{ path = 'HKCU:\Software\...'; name = 'Altro'; remove = 1 } ); desc = '...' }
+
+# wizard: comando aperto in una finestra PowerShell elevata
+@{ id = 'wizard-x'; name = '...'; cat = 'Wizard e script'; preset = ''; guida = '1'; kind = 'cmd';
+   cmd = 'irm https://esempio | iex'; desc = '...' }
+```
+
+`remove = 1` cancella il valore (riporta il default di Windows), utile per la voce
+"Ripristina". Ricordati la trappola della hashtable (`$op.remove` = metodo `Remove()`):
+leggere i campi con `Get-OpField`.
 
 ### Aggiornare i fix mouse
 

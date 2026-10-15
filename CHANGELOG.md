@@ -3,6 +3,24 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.2.0] - 2026-10-15
+
+### Aggiunto
+- Sezione **Tweaks di Windows** nella lista (guida EZ, sezione 9): estensioni visibili in
+  Explorer, file nascosti, Esplora file su "Questo PC", barra senza widget/chat/visualizzazione
+  attivita, niente casella di ricerca ne' Bing, Copilot spento, niente suggerimenti e
+  pubblicita in Start/Impostazioni, piu' **"Ripristina i valori originali di Windows"**.
+- Sezione **Wizard e script**: **MAS** (attivazione Windows/Office) e **WinUtil** (debloat,
+  tweak, app) si aprono in una finestra PowerShell **elevata**, come dice la guida.
+- Le voci non-app hanno un `kind`: `tweak` (valori di registro, con `ops`) e `cmd` (wizard);
+  vivono in `build/tweaks.inc`. Nel rail le sezioni non-app (Aggiornamenti automatici, Mouse,
+  Tweaks di Windows, Wizard e script) stanno in cima, separate dalle categorie di app.
+
+### Corretto
+- I tweak non scrivevano **niente**: su una hashtable `$op.remove` non e' `$null` ma il metodo
+  `Remove()`, quindi ogni operazione finiva nel ramo "cancella" e usciva senza errori. Ora i
+  campi delle op si leggono con `Get-OpField` (`Contains()`/`PSObject.Properties`).
+
 ## [1.1.3] - 2026-10-15
 
 ### Aggiunto

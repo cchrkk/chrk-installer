@@ -191,6 +191,8 @@ foreach ($it in ($all.Values | Sort-Object @{e={$catOrder.IndexOf($_.cat)}}, @{e
 }
 $inc = Join-Path $buildDir 'mousefixes.inc'
 if (Test-Path $inc) { $lines.AddRange([string[]](Get-Content $inc)) }
+$inc2 = Join-Path $buildDir 'tweaks.inc'
+if (Test-Path $inc2) { $lines.AddRange([string[]](Get-Content $inc2)) }
 $body = ($lines -join ",`r`n")
 
 # ---- 9) logo + template --------------------------------------------------

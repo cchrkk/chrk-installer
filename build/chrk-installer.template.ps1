@@ -129,6 +129,50 @@ function Apply-MouseFix($pkg) {
     if ($pkg.t1)    { Set-ItemProperty -Path $def -Name MouseThreshold1 -Type String -Value $pkg.t1 }
     if ($pkg.t2)    { Set-ItemProperty -Path $def -Name MouseThreshold2 -Type String -Value $pkg.t2 }
 }
+function Get-OpField($op, [string]$field) {
+    # attenzione: su una hashtable $op.remove NON e' $null, e' il metodo Remove().
+    # Per questo i campi si leggono con Contains()/Properties e mai con $op.<campo>.
+    if ($op -is [System.Collections.IDictionary]) {
+        if ($op.Contains($field)) { return $op[$field] }
+        return $null
+    }
+    if ($op -and $op.PSObject.Properties[$field]) { return $op.PSObject.Properties[$field].Value }
+    return $null
+}
+function Apply-Ops($ops) {
+    foreach ($op in @($ops)) {
+        if (-not $op) { continue }
+        $path = [string](Get-OpField $op 'path')
+        $name = [string](Get-OpField $op 'name')
+        if (-not $path -or -not $name) { continue }
+        if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+        if (Get-OpField $op 'remove') { Remove-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue }
+        else { Set-ItemProperty -Path $path -Name $name -Value (Get-OpField $op 'value') -Type ([string](Get-OpField $op 'type')) -Force }
+    }
+}
+function Test-Ops([object]$ops) {
+    foreach ($op in @($ops)) {
+        if (-not $op) { continue }
+        $path = [string](Get-OpField $op 'path')
+        $name = [string](Get-OpField $op 'name')
+        if (-not $path -or -not $name) { continue }
+        $cur = $null
+        try { $cur = (Get-ItemProperty -Path $path -Name $name -ErrorAction Stop).$name } catch { $cur = $null }
+        if (Get-OpField $op 'remove') { if ($null -ne $cur) { return $false } }
+        else {
+            if ($null -eq $cur) { return $false }
+            if ([string]$cur -ne [string](Get-OpField $op 'value')) { return $false }
+        }
+    }
+    return $true
+}
+# I wizard (MAS, WinUtil) girano in una finestra PowerShell separata ed elevata: sono
+# interattivi e hanno bisogno di admin.
+function Start-Wizard([string]$cmd, [switch]$DryRun) {
+    $argline = '-NoProfile -ExecutionPolicy Bypass -NoExit -Command "' + $cmd + '"'
+    if ($DryRun) { Write-Host ("DRY   powershell " + $argline) -ForegroundColor DarkGray; return }
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $argline -Verb RunAs | Out-Null
+}
 function Get-CurrentCurveHex([string]$name) {
     try {
         $v = (Get-ItemProperty -Path 'HKCU:\Control Panel\Mouse' -Name $name -ErrorAction Stop).$name
@@ -311,6 +355,23 @@ if ($Console -or $UpgradeAll) {
             if ($DryRun) { Write-Host ("DRY   {0,-40} fix mouse" -f $pkg.name) -ForegroundColor DarkGray; continue }
             Write-Host (".... {0}" -f $pkg.name) -ForegroundColor Gray -NoNewline
             try { Apply-MouseFix $pkg; Write-Host ("`rOK    {0,-40} registro aggiornato" -f $pkg.name) -ForegroundColor Green; $ok++ }
+            catch { Write-Host ("`rFAIL  {0,-40} {1}" -f $pkg.name, $_.Exception.Message) -ForegroundColor Red; $fail++ }
+            continue
+        }
+        if ($pkg.kind -eq 'tweak') {
+            if ($DryRun) { Write-Host ("DRY   {0,-40} tweak del registro" -f $pkg.name) -ForegroundColor DarkGray; continue }
+            Write-Host (".... {0}" -f $pkg.name) -ForegroundColor Gray -NoNewline
+            try { Apply-Ops $pkg.ops; Write-Host ("`rOK    {0,-40} registro aggiornato" -f $pkg.name) -ForegroundColor Green; $ok++ }
+            catch { Write-Host ("`rFAIL  {0,-40} {1}" -f $pkg.name, $_.Exception.Message) -ForegroundColor Red; $fail++ }
+            continue
+        }
+        if ($pkg.kind -eq 'cmd') {
+            Write-Host (".... {0}" -f $pkg.name) -ForegroundColor Gray -NoNewline
+            try {
+                Start-Wizard $pkg.cmd -DryRun:$DryRun
+                if ($DryRun) { Write-Host ("`rDRY   {0,-40} wizard" -f $pkg.name) -ForegroundColor DarkGray }
+                else { Write-Host ("`rOK    {0,-40} aperto in una finestra elevata" -f $pkg.name) -ForegroundColor Green; $ok++ }
+            }
             catch { Write-Host ("`rFAIL  {0,-40} {1}" -f $pkg.name, $_.Exception.Message) -ForegroundColor Red; $fail++ }
             continue
         }
@@ -770,11 +831,20 @@ foreach ($cat in $script:CatOrder) {
 }
 
 # --- rail: voci ------------------------------------------------------------
+# Le sezioni che non sono categorie di app (aggiornamenti, tweak, mouse fix, wizard) stanno
+# in cima, separate da una riga: le categorie di app restano l elenco sotto.
 $railItems = [System.Collections.Generic.List[object]]::new()
-$railItems.Add([pscustomobject]@{ Kind = 'cron'; Cat = $null; Label = 'Aggiornamenti automatici'; Count = -1 })
-$railItems.Add([pscustomobject]@{ Kind = 'all'; Cat = '*'; Label = 'Tutte le app'; Count = $script:Rows.Count })
+$railItems.Add([pscustomobject]@{ Kind = 'cron'; Cat = $null; Label = 'Aggiornamenti automatici'; Count = -1; Sep = $true })
+$railItems.Add([pscustomobject]@{ Kind = 'all'; Cat = '*'; Label = 'Tutte le app'; Count = $script:Rows.Count; Sep = $false })
+$speciali = @('Tweaks di Windows', 'Mouse', 'Wizard e script')
+$specialiPresenti = @($script:Heads | Where-Object { $speciali -contains $_.cat })
+foreach ($h in $specialiPresenti) {
+    $ultimo = ($h.cat -eq $specialiPresenti[-1].cat)
+    $railItems.Add([pscustomobject]@{ Kind = 'cat'; Cat = $h.cat; Label = $h.cat; Count = $h.count; Sep = $ultimo })
+}
 foreach ($h in $script:Heads) {
-    $railItems.Add([pscustomobject]@{ Kind = 'cat'; Cat = $h.cat; Label = $h.cat; Count = $h.count })
+    if ($speciali -contains $h.cat) { continue }
+    $railItems.Add([pscustomobject]@{ Kind = 'cat'; Cat = $h.cat; Label = $h.cat; Count = $h.count; Sep = $false })
 }
 foreach ($it in $railItems) { [void]$lstCats.Items.Add($it) }
 
@@ -787,10 +857,11 @@ $lstCats.Add_DrawItem({
     $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.fg }
     if ($it.Kind -eq 'cron') { $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.warn } }
     if ($it.Kind -eq 'all') { $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.acc } }
+    if ($it.Kind -eq 'cat' -and $speciali -contains $it.Cat) { $fore = if ($sel) { [System.Drawing.Color]::White } else { $col.warn } }
     $brush = [System.Drawing.SolidBrush]::new($back)
     $e.Graphics.FillRectangle($brush, $e.Bounds)
     $brush.Dispose()
-    if ($it.Kind -eq 'cron') {
+    if ($it.Sep) {
         $pen = [System.Drawing.Pen]::new($col.bg3)
         $e.Graphics.DrawLine($pen, $e.Bounds.X + 6, $e.Bounds.Bottom - 2, $e.Bounds.Right - 6, $e.Bounds.Bottom - 2)
         $pen.Dispose()
@@ -986,6 +1057,45 @@ $workerCore = {
             continue
         }
 
+        if ($info.kind -eq 'tweak') {
+            try {
+                foreach ($op in @($info.ops)) {
+                    if (-not $op) { continue }
+                    # $op.remove su una hashtable e' il METODO Remove(), non $null: i campi
+                    # si leggono con Contains()/Properties, mai con $op.<campo>
+                    $path = $null; $name = $null; $val = $null; $typ = $null; $rem = $null
+                    if ($op -is [System.Collections.IDictionary]) {
+                        if ($op.Contains('path')) { $path = $op['path'] }
+                        if ($op.Contains('name')) { $name = $op['name'] }
+                        if ($op.Contains('value')) { $val = $op['value'] }
+                        if ($op.Contains('type')) { $typ = [string]$op['type'] }
+                        if ($op.Contains('remove')) { $rem = $op['remove'] }
+                    } else {
+                        $path = $op.path; $name = $op.name; $val = $op.value; $typ = [string]$op.type; $rem = $op.remove
+                    }
+                    if (-not $path -or -not $name) { continue }
+                    if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                    if ($rem) { Remove-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue }
+                    else { Set-ItemProperty -Path $path -Name $name -Value $val -Type $typ -Force }
+                }
+                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'OK'; det = 'registro aggiornato' }
+            } catch {
+                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'FAIL'; det = $_.Exception.Message }
+            }
+            continue
+        }
+
+        if ($info.kind -eq 'cmd') {
+            try {
+                $argline = '-NoProfile -ExecutionPolicy Bypass -NoExit -Command "' + $info.cmd + '"'
+                Start-Process -FilePath 'powershell.exe' -ArgumentList $argline -Verb RunAs | Out-Null
+                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'OK'; det = 'aperto in una finestra elevata' }
+            } catch {
+                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'FAIL'; det = $_.Exception.Message }
+            }
+            continue
+        }
+
         $a = @('install', '--id', $id, '--exact', '--accept-package-agreements', '--accept-source-agreements', '--source', $info.src, '--silent')
         $p = Start-Process -FilePath winget -ArgumentList $a -NoNewWindow -Wait -PassThru
         $c = $p.ExitCode
@@ -1019,6 +1129,7 @@ function Start-Worker([string]$kind) {
     $meta = @{}
     foreach ($r in $script:Rows) {
         $meta[$r.pkg.id] = @{ name = $r.pkg.name; src = $r.pkg.src; kind = $r.pkg.kind
+            ops = $r.pkg.ops; cmd = $r.pkg.cmd
             x = $r.pkg.x; y = $r.pkg.y; sens = $r.pkg.sens; speed = $r.pkg.speed; t1 = $r.pkg.t1; t2 = $r.pkg.t2 }
     }
     $rs = [runspacefactory]::CreateRunspace()
@@ -1081,7 +1192,17 @@ function Drain-Queue {
                         $applied++
                     }
                 }
-                $lblScan.Text = ("{0} installati - {1} mouse fix" -f $n, $applied)
+                # tweak del registro gia a posto
+                foreach ($r in $script:Rows) {
+                    if ($r.pkg.kind -ne 'tweak' -or -not $r.pkg.ops) { continue }
+                    if (Test-Ops $r.pkg.ops) {
+                        $r.cb.Text = ($r.base + '   (gia applicato)')
+                        $r.cb.ForeColor = $col.mut
+                        $r.cb.Checked = $false
+                        $applied++
+                    }
+                }
+                $lblScan.Text = ("{0} installati - {1} fix/tweak applicati" -f $n, $applied)
                 Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse gia applicati. ItemsSize rilevato: {3}%." -f (Stamp), $n, $applied, (Get-CurrentScale)) $col.mut
                 if ($Preset -ne 'none') { Apply-Preset $Preset } else { Apply-Filter }
                 $lblStatus.Text = 'Pronto. Seleziona e premi APPLICA SELEZIONATI.'
@@ -1164,8 +1285,9 @@ $btnInstall.Add_Click({
     if (-not $sel.Count) { [System.Windows.Forms.MessageBox]::Show('Nessun elemento selezionato.') | Out-Null; return }
     if ($DryRun) { Write-Log ('DRY-RUN: avrei applicato {0} elementi' -f $sel.Count) $col.warn; return }
     $pk = @($sel | Where-Object { $_.pkg.kind -eq 'pkg' }).Count
-    $mx = @($sel | Where-Object { $_.pkg.kind -eq 'mouse' }).Count
-    Write-Log ("[{0}] === AVVIO: {1} pacchetti, {2} fix mouse ===" -f (Stamp), $pk, $mx) $col.acc
+    $mx = @($sel | Where-Object { $_.pkg.kind -eq 'mouse' -or $_.pkg.kind -eq 'tweak' }).Count
+    $wz = @($sel | Where-Object { $_.pkg.kind -eq 'cmd' }).Count
+    Write-Log ("[{0}] === AVVIO: {1} pacchetti, {2} voci di registro, {3} wizard ===" -f (Stamp), $pk, $mx, $wz) $col.acc
     Start-Worker 'install'
 })
 $btnUpgrade.Add_Click({

@@ -26,6 +26,12 @@ irm https://s.chrk.tk | iex
 - **Aggiornamento automatico**: sezione dedicata dentro la lista - crea/rimuove il task di
   Windows che esegue `winget upgrade --all` ogni N giorni all'ora scelta, con lo stato e la
   prossima esecuzione in chiaro.
+- **Tweaks di Windows** (dalla guida EZ): estensioni visibili in Explorer, file nascosti,
+  Esplora file su "Questo PC", barra senza widget/chat/visualizzazione attivita, niente
+  ricerca Bing, Copilot spento, niente suggerimenti e pubblicita in Start e Impostazioni,
+  piu' una voce che **ripristina i valori originali**.
+- **Wizard e script**: MAS (attivazione Windows/Office) e WinUtil (debloat) si aprono con un
+  click in una finestra PowerShell **elevata**.
 - **Fix mouse MarkC** selezionabili: 1:1 @6/11 per la propria scala DPI (rilevata), emulazioni
   W95/98 e W2K, disattivazione accelerazione su login, ripristino default.
 - **Auto-aggiornamento**: `-SelfUpdate` o il pulsante nella GUI.
@@ -95,6 +101,7 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 │  ├─ extras.json                   pacchetti extra (preset "Extra")
 │  ├─ names.json                    nomi/descrizioni manuali di riserva
 │  ├─ mousefixes.inc                fix mouse MarkC gia' estratti
+│  ├─ tweaks.inc                    tweak di Windows + wizard (MAS, WinUtil)
 │  └─ assets/logo.png|svg           logo (png = embeddato)
 ├─ docs/                            architettura, pubblicazione, fix mouse
 ├─ tools/export-winget.ps1          rigenera catalog-mine.json + lista app manuali

@@ -62,6 +62,15 @@ Regole:
    src = 'winget'; preset = 'mine'|'extra'|''; ez = '1'|''; kind = 'pkg' }
 ```
 
+`kind` decide cosa fa `APPLICA`:
+
+| `kind` | da dove | cosa fa |
+|---|---|---|
+| `pkg` | catalogo (winget) | `winget install --id ...` |
+| `mouse` | `mousefixes.inc` | curve MarkC nel registro |
+| `tweak` | `tweaks.inc` (`ops`) | valori di registro (o `remove = 1` per toglierli) |
+| `cmd` | `tweaks.inc` (`cmd`) | apre il comando in una finestra PowerShell elevata (MAS, WinUtil) |
+
 Per i fix mouse (`kind = 'mouse'`) ci sono invece `scale`, `sens`, `x`, `y`, `speed`,
 `t1`, `t2` e `desc`.
 
