@@ -17,8 +17,10 @@ irm https://s.chrk.tk | iex
 - **Rileva cosa e' gia' installato** e lo salta (segna le voci come `(gia installato)`).
 - **Avanzamento chiaro**: pacchetto corrente, `n/totale`, percentuale, media per pacchetto,
   ETA ed esito di ogni voce (`OK` / `SKIP` / `FAIL` con motivo).
-- **Preset**: `Consigliati` (le app della lista dell'autore + gli extra scelti a mano),
-  `Mouse fix`, `Nessuno`.
+- **Preset** (rail, *SELEZIONE RAPIDA*): `Consigliati` (la base della guida
+  [x.chrk.tk/ez](https://x.chrk.tk/ez): browser, VLC, 7zip, Steam, Git, editor, utility),
+  `CHRK.` (la lista dell'autore), `Extra` (scelte a mano), `Mouse fix`, piu' `Pulisci
+  selezione` nell'intestazione della lista.
 - **Aggiornamento automatico**: sezione dedicata dentro la lista - crea/rimuove il task di
   Windows che esegue `winget upgrade --all` ogni N giorni all'ora scelta, con lo stato e la
   prossima esecuzione in chiaro.
@@ -58,7 +60,7 @@ irm https://s.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
 
 | Parametro | Effetto |
 |---|---|
-| `-Preset recommended\|mouse\|all\|none` | preselezione (`mine` e `extra` restano come alias di `recommended`) |
+| `-Preset recommended\|ez\|mine\|extra\|mouse\|all\|none` | preselezione (`recommended` e `ez` = base consigliata; `mine` = lista dell'autore; `extra` = extra) |
 | `-Select <id,id>` | selezione esplicita |
 | `-Console` | niente GUI |
 | `-DryRun` | non modifica nulla, mostra cosa farebbe |
@@ -77,8 +79,9 @@ irm https://s.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
 ├─ build/
 │  ├─ build.ps1                     compila dist/ partendo dai dati sotto
 │  ├─ chrk-installer.template.ps1   sorgente dello script, con i placeholder
-│  ├─ catalog-mine.json             export winget dell'autore -> preset "Consigliati"
-│  ├─ extras.json                   pacchetti extra (sempre nel preset "Consigliati")
+│  ├─ catalog-mine.json             export winget dell'autore -> preset "CHRK."
+│  ├─ ez.json                       app di base consigliate (guida x.chrk.tk/ez)
+│  ├─ extras.json                   pacchetti extra (preset "Extra")
 │  ├─ names.json                    nomi/descrizioni manuali di riserva
 │  ├─ mousefixes.inc                fix mouse MarkC gia' estratti
 │  └─ assets/logo.png|svg           logo (png = embeddato)

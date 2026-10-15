@@ -22,7 +22,8 @@
 
     USO
         .\CHRK-Installer.ps1                      # GUI
-        .\CHRK-Installer.ps1 -Preset recommended  # GUI con le app consigliate preselezionate
+        .\CHRK-Installer.ps1 -Preset recommended  # GUI con la base consigliata preselezionata
+        .\CHRK-Installer.ps1 -Preset mine         # GUI con la mia lista
         .\CHRK-Installer.ps1 -Preset mouse        # GUI coi fix mouse consigliati
         .\CHRK-Installer.ps1 -Console             # elenco a console
         .\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
@@ -37,8 +38,8 @@
 [CmdletBinding()]
 param(
     [string[]]$Select,
-    # mine/extra sono alias storici di recommended
-    [ValidateSet('recommended', 'mine', 'extra', 'mouse', 'all', 'none')]
+    # recommended/ez = base della guida EZ | mine = la mia lista | extra = scelte a mano
+    [ValidateSet('recommended', 'ez', 'mine', 'extra', 'mouse', 'all', 'none')]
     [string]$Preset = 'none',
     [switch]$SkipInstalled,
     [switch]$Console,
@@ -58,7 +59,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.1.0'
+$script:Version   = '1.1.1'
 $script:UpdateUrl = 'https://s.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
@@ -89,214 +90,216 @@ if (-not $PSCommandPath -and -not $NoSelfInstall) {
 
 # ==== catalogo ==============================================================
 $Packages = @(
-    @{ id = 'Microsoft.Edge'; name = 'Microsoft Edge'; cat = 'Browser'; desc = 'Microsoft Edge is a cross-platform web browser built for modern life.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'TheBrowserCompany.Arc'; name = 'Arc'; cat = 'Browser'; desc = 'Arc is a new browser that shapes itself to how you use the internet. It offers Spaces, Profiles, Split View, Themes, and more to organize and customize your online experience.'; pub = 'The Browser Company of New York'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Brave.Brave'; name = 'Brave'; cat = 'Browser'; desc = 'Secure, Fast & Private Web Browser with Adblocker'; pub = 'Brave Software Inc'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Google.Chrome'; name = 'Google Chrome'; cat = 'Browser'; desc = 'The Fast & Secure Web Browser Built to be Yours'; pub = 'Google LLC'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Mozilla.Firefox'; name = 'Mozilla Firefox (en-US)'; cat = 'Browser'; desc = 'Mozilla Firefox is free and open source software, built by a community of thousands from all over the world.'; pub = 'Mozilla'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Mozilla.Firefox.ESR'; name = 'Mozilla Firefox ESR (en-US)'; cat = 'Browser'; desc = 'Get the Firefox Extended Support Release or Rapid Release browser for comprehensive data security and data protection.'; pub = 'Mozilla'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Opera.Opera'; name = 'Opera Stable'; cat = 'Browser'; desc = 'The Opera browser includes everything you need for private, safe, and efficient browsing, along with a variety of unique features to enhance your capabilities online.'; pub = 'Opera Software'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Vivaldi.Vivaldi'; name = 'Vivaldi'; cat = 'Browser'; desc = 'Powerful, Personal and Private web browser.'; pub = 'Vivaldi Technologies AS.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Yandex.Browser'; name = 'Yandex Browser'; cat = 'Browser'; desc = 'Yandex Browser delivers fast and secure browsing with built-in Alice and the ability to sync passwords, bookmarks, and bank cards across devices.'; pub = 'Yandex'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'SpikeHD.Dorion'; name = 'Dorion'; cat = 'Comunicazione'; desc = 'Tiny alternative Discord client with a smaller footprint, snappier startup, themes, plugins and more!'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.Teams'; name = 'Microsoft Teams'; cat = 'Comunicazione'; desc = 'Collaborate more effectively with a faster, simpler, smarter, and more flexible Teams.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.Outlook'; name = 'Outlook'; cat = 'Comunicazione'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Telegram.TelegramDesktop'; name = 'Telegram Desktop'; cat = 'Comunicazione'; desc = 'A cloud-based mobile and desktop messaging app with a focus on security and speed.'; pub = 'Telegram FZ-LLC'; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Vencord.Vesktop'; name = 'Vesktop'; cat = 'Comunicazione'; desc = 'A cross-platform electron-based desktop app aiming to give you a snappier Discord experience with Vencord pre-installed.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Discord.Discord.x86'; name = 'Discord (x86)'; cat = 'Comunicazione'; desc = 'Your Place to Talk and Hang Out.'; pub = 'Discord Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Mozilla.Thunderbird'; name = 'Mozilla Thunderbird (en-US)'; cat = 'Comunicazione'; desc = 'Thunderbird is a free email application that is easy to set up and customize - and it''s loaded with great features!'; pub = 'Mozilla'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Mozilla.Thunderbird.ESR'; name = 'Mozilla Thunderbird ESR (en-US)'; cat = 'Comunicazione'; desc = 'The official annual extended support release of Thunderbird intended for users who want all available new features on an annual basis and stability/security fixes on a monthly basis.'; pub = 'Mozilla'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Pidgin.Pidgin'; name = 'Pidgin'; cat = 'Comunicazione'; desc = 'Pidgin is a universal chat client, allowing you to consolidate all your different messaging apps into a single tool.'; pub = 'Pidgin IM'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'SlackTechnologies.Slack'; name = 'Slack'; cat = 'Comunicazione'; desc = 'Slack brings the team together, wherever you are.'; pub = 'Slack Technologies Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'CeruleanStudios.Trillian'; name = 'Trillian'; cat = 'Comunicazione'; desc = 'A modern and secure instant messaging for people, business and healthcare'; pub = 'Cerulean Studios, LLC'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Cisco.Webex'; name = 'Webex'; cat = 'Comunicazione'; desc = 'With industry leading video conferencing, calling, and contact center solutions, Webex fuels hybrid work for businesses of all sizes.'; pub = 'Cisco Systems, Inc'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Zoom.Zoom'; name = 'Zoom Workplace'; cat = 'Comunicazione'; desc = 'Team Chat, Phone, Video & More'; pub = 'Zoom'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Apache.OpenOffice'; name = 'OpenOffice'; cat = 'Documenti'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'geeksoftwareGmbH.PDF24Creator'; name = 'PDF24 Creator'; cat = 'Documenti'; desc = 'Free and easy-to-use online/desktop PDF tools that make you more productive'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Adobe.Acrobat.Reader.64-bit'; name = 'Adobe Acrobat Reader (64-bit)'; cat = 'Documenti'; desc = 'The free global standard for reliably viewing, printing, signing, and commenting on PDF documents.'; pub = 'Adobe'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'AcroSoftware.CutePDFWriter'; name = 'CutePDF Writer'; cat = 'Documenti'; desc = 'Create PDFs from almost any application'; pub = 'Acro Software Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Evernote.Evernote'; name = 'Evernote'; cat = 'Documenti'; desc = 'Remember everything and tackle any project with your notes, tasks, and schedule all in one place.'; pub = 'Evernote Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Foxit.FoxitReader.Inno'; name = 'Foxit PDF Reader'; cat = 'Documenti'; desc = 'Industrys most powerful PDF Reader Solution.'; pub = 'Foxit Software Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'TheDocumentFoundation.LibreOffice'; name = 'LibreOffice'; cat = 'Documenti'; desc = 'LibreOffice is a free and powerful office suite, and a successor to OpenOffice.org (commonly known as OpenOffice). Its clean interface and feature-rich tools help you unleash your creativity and enhance your productiv...'; pub = 'The Document Foundation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.Office'; name = 'Microsoft 365 Apps for enterprise'; cat = 'Documenti'; desc = 'The most productive and most secure Office experience for enterprises, allowing your teams to work together seamlessly from anywhere, anytime.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Notion.Notion'; name = 'Notion'; cat = 'Documenti'; desc = 'A new tool that blends your everyday work apps into one. It''s the all-in-one workspace for you and your team.'; pub = 'Notion Labs, Inc'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Kingsoft.WPSOffice'; name = 'WPS Office'; cat = 'Documenti'; desc = 'A free office suite fully compatible with Microsoft Office'; pub = 'Kingsoft Corp.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Xmind.Xmind'; name = 'Xmind'; cat = 'Documenti'; desc = 'A full-featured Swiss Army Knife for your brain.'; pub = 'XMIND LTD.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Google.PlatformTools'; name = 'Android Platform Tools'; cat = 'Sviluppo'; desc = 'adb, fastboot e gli altri strumenti da riga di comando per Android.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Google.AndroidStudio'; name = 'Android Studio'; cat = 'Sviluppo'; desc = 'IDE ufficiale per lo sviluppo Android (include l emulatore).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'ArduinoSA.IDE.stable'; name = 'Arduino IDE'; cat = 'Sviluppo'; desc = 'IDE per programmare schede Arduino.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Anthropic.Claude'; name = 'Claude Desktop'; cat = 'Sviluppo'; desc = 'Anthropic''s Claude desktop application for focused AI-assisted work and chat.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Kitware.CMake'; name = 'CMake'; cat = 'Sviluppo'; desc = 'CMake is an open-source, cross-platform family of tools designed to build, test and package software.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'DenoLand.Deno'; name = 'Deno'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.17.JDK'; name = 'Eclipse Temurin JDK with Hotspot 17'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Git.Git'; name = 'Git'; cat = 'Sviluppo'; desc = 'A free and open source distributed version control system'; pub = 'The Git Development Community'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'GitHub.cli'; name = 'GitHub CLI'; cat = 'Sviluppo'; desc = 'GitHub CLI brings pull requests, issues, releases, and other GitHub workflows to the terminal.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'GoLang.Go'; name = 'Go'; cat = 'Sviluppo'; desc = 'Go (or Golang) is a statically typed, compiled programming language designed for simplicity, reliability, and efficiency.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Oracle.JavaRuntimeEnvironment'; name = 'Java 8'; cat = 'Sviluppo'; desc = 'Java allows you to play online games, chat with people around the world, calculate your mortgage interest, and view images in 3D, just to name a few.'; pub = 'Oracle Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Ninja-build.Ninja'; name = 'Ninja'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'OpenJS.NodeJS'; name = 'NodeJS'; cat = 'Sviluppo'; desc = 'NodeJS is a JavaScript runtime built on Chrome''s V8 JavaScript engine for building server-side and networking applications.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Notepad++.Notepad++'; name = 'Notepad++'; cat = 'Sviluppo'; desc = 'Notepad++ is a free source code editor that supports several languages.'; pub = 'Notepad++ Team'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Ollama.Ollama'; name = 'Ollama'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'SST.opencode'; name = 'opencode'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.PowerShell'; name = 'PowerShell'; cat = 'Sviluppo'; desc = 'PowerShell is a task automation framework and scripting language designed for system administrators, offering powerful command-line capabilities.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Python.Python.3.14'; name = 'Python 3.14'; cat = 'Sviluppo'; desc = 'A programming language that lets you work more quickly and integrate your systems more effectively.'; pub = 'Python Software Foundation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Python.Launcher'; name = 'Python Launcher'; cat = 'Sviluppo'; desc = 'Avvia le versioni di Python installate (comando py).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Rustlang.Rustup'; name = 'Rustup'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'StrawberryPerl.StrawberryPerl'; name = 'StrawberryPerl'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'astral-sh.uv'; name = 'uv'; cat = 'Sviluppo'; desc = 'uv is a fast Python package and project manager written in Rust.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VisualStudio.2022.Community'; name = 'Visual Studio 2022'; cat = 'Sviluppo'; desc = 'Visual Studio 2022 is an integrated development environment (IDE) for building, debugging, and deploying applications.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsTerminal'; name = 'Windows Terminal'; cat = 'Sviluppo'; desc = 'Windows Terminal is a modern, fast, and efficient terminal application for command-line users, supporting multiple tabs, panes, and more.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VisualStudioCode'; name = 'Microsoft Visual Studio Code'; cat = 'Sviluppo'; desc = 'Microsoft Visual Studio Code is a code editor redefined and optimized for building and debugging modern web and cloud applications. Microsoft Visual Studio Code is free and available on your favorite platform - Linux,...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.11.JDK'; name = 'Amazon Corretto 11'; cat = 'Sviluppo'; desc = 'Amazon Corretto 11 is a Long-Term Supported (LTS) distribution of OpenJDK 11'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.17.JDK'; name = 'Amazon Corretto 17'; cat = 'Sviluppo'; desc = 'Amazon Corretto 17 is a Long-Term Supported (LTS) distribution of OpenJDK 17'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.21.JDK'; name = 'Amazon Corretto 21'; cat = 'Sviluppo'; desc = 'Amazon Corretto 21 is a Long-Term Supported (LTS) distribution of OpenJDK 21'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.25.JDK'; name = 'Amazon Corretto 25'; cat = 'Sviluppo'; desc = 'Amazon Corretto 25 is a distribution of OpenJDK 25'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.8.JDK'; name = 'Amazon Corretto 8'; cat = 'Sviluppo'; desc = 'Amazon Corretto 8 is a Long-Term Supported (LTS) distribution of OpenJDK 8'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Amazon.Corretto.8.JRE'; name = 'Amazon Corretto JRE 8'; cat = 'Sviluppo'; desc = 'Amazon Corretto JRE 8 is a Long-Term Supported (LTS) distribution of OpenJRE 8'; pub = 'Amazon'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Anysphere.Cursor'; name = 'Cursor'; cat = 'Sviluppo'; desc = 'The AI Code Editor'; pub = 'Anysphere'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Docker.DockerDesktop'; name = 'Docker Desktop'; cat = 'Sviluppo'; desc = 'An application for the building and sharing of containerized applications.'; pub = 'Docker Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.11.JDK'; name = 'Eclipse Temurin JDK with Hotspot 11'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.21.JDK'; name = 'Eclipse Temurin JDK with Hotspot 21'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.25.JDK'; name = 'Eclipse Temurin JDK with Hotspot 25'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.8.JDK'; name = 'Eclipse Temurin JDK with Hotspot 8'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.11.JRE'; name = 'Eclipse Temurin JRE with Hotspot 11'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.17.JRE'; name = 'Eclipse Temurin JRE with Hotspot 17'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.21.JRE'; name = 'Eclipse Temurin JRE with Hotspot 21'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.25.JRE'; name = 'Eclipse Temurin JRE with Hotspot 25'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'EclipseAdoptium.Temurin.8.JRE'; name = 'Eclipse Temurin JRE with Hotspot 8'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Oracle.JDK.17'; name = 'Java(TM) SE Development Kit 17'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Oracle.JDK.21'; name = 'Java(TM) SE Development Kit 21'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Oracle.JDK.25'; name = 'Java(TM) SE Development Kit 25'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Ngrok.Ngrok'; name = 'Ngrok'; cat = 'Sviluppo'; desc = 'Tunnel local ports to public URLs and inspect traffic'; pub = 'ngrok, Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Python.Python.3.13'; name = 'Python 3.13'; cat = 'Sviluppo'; desc = 'Python is a programming language that lets you work more quickly and integrate your systems more effectively.'; pub = 'Python Software Foundation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Python.PythonInstallManager'; name = 'Python Install Manager'; cat = 'Sviluppo'; desc = 'Install, manage, and launch Python on Windows.'; pub = 'Python Software Foundation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'WinMerge.WinMerge'; name = 'WinMerge'; cat = 'Sviluppo'; desc = 'WinMerge is an open source differencing and merging tool for Windows.'; pub = 'Thingamahoochie Software'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Canva.Affinity'; name = 'Affinity'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'VictorAlves.Aonsoku'; name = 'Aonsoku'; cat = 'Multimedia e foto'; desc = 'Client desktop per server musicali Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'jeffvli.Feishin'; name = 'Feishin'; cat = 'Multimedia e foto'; desc = 'Player musicale per server Navidrome/Jellyfin/Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'yt-dlp.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Gyan.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'HandBrake.HandBrake'; name = 'HandBrake'; cat = 'Multimedia e foto'; desc = 'HandBrake is an open-source video transcoder, allowing you to convert video from nearly any format to a selection of widely supported codecs.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Daum.PotPlayer'; name = 'PotPlayer'; cat = 'Multimedia e foto'; desc = 'Powerful multimedia player that supports a variety of different video codecs and formats.'; pub = 'Kakao Corp.'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'ShareX.ShareX'; name = 'ShareX'; cat = 'Multimedia e foto'; desc = 'Screen capture, file sharing and productivity tool'; pub = 'ShareX Team'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Spotify.Spotify'; name = 'Spotify'; cat = 'Multimedia e foto'; desc = 'All the music youll ever need.'; pub = 'Spotify AB'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'TenacityTeam.Tenacity'; name = 'Tenacity'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'VideoLAN.VLC'; name = 'VLC media player'; cat = 'Multimedia e foto'; desc = 'VLC is a free and open source cross-platform multimedia player and framework that plays most multimedia files, and various streaming protocols.'; pub = 'VideoLAN'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'yt-dlp.yt-dlp'; name = 'yt-dlp'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'AdrienAllard.FileConverter'; name = 'File Converter'; cat = 'Multimedia e foto'; desc = 'File Converter converts and compresses files from the Windows Explorer context menu.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'shinchiro.mpv'; name = 'mpv'; cat = 'Multimedia e foto'; desc = 'mpv is a free, open source, and cross-platform media player supporting a wide variety of media formats, codecs, and subtitle types.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'OBSProject.OBSStudio'; name = 'OBS Studio'; cat = 'Multimedia e foto'; desc = 'Free and open source software for video recording and live streaming.'; pub = 'OBS Project'; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'BlenderFoundation.Blender'; name = 'blender'; cat = 'Multimedia e foto'; desc = 'Free and Open 3D Creation Software'; pub = 'Blender Foundation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'ByteDance.CapCut'; name = 'CapCut'; cat = 'Multimedia e foto'; desc = 'A video editing tool packed with features on your desktop or laptop'; pub = 'Bytedance Pte. Ltd.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'FastStone.Viewer'; name = 'FastStone Image Viewer'; cat = 'Multimedia e foto'; desc = 'FastStone Image Viewer is a fast, stable, user-friendly image browser, converter and editor.'; pub = 'FastStone Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'GIMP.GIMP.3'; name = 'GIMP'; cat = 'Multimedia e foto'; desc = 'GIMP is an acronym for GNU Image Manipulation Program. It is a freely distributed program for such tasks as photo retouching, image composition and image authoring.'; pub = 'The GIMP Team'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Google.EarthPro'; name = 'Google Earth Pro'; cat = 'Multimedia e foto'; desc = 'The world''s most detailed globe'; pub = 'Google'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Greenshot.Greenshot'; name = 'Greenshot'; cat = 'Multimedia e foto'; desc = 'A light-weight screenshot software tool for Windows.'; pub = 'Greenshot'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Inkscape.Inkscape'; name = 'Inkscape'; cat = 'Multimedia e foto'; desc = 'A professional vector graphics software which runs on Linux, macOS and Windows desktop computers.'; pub = 'Inkscape'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'IrfanSkiljan.IrfanView'; name = 'IrfanView'; cat = 'Multimedia e foto'; desc = 'Fast and compact image viewer and converter'; pub = 'Irfan Skiljan'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Apple.iTunes'; name = 'iTunes'; cat = 'Multimedia e foto'; desc = 'iTunes offers the worlds best way to play  and add to  your collection of music, movies, TV shows, podcasts, audiobooks, and more.'; pub = 'Apple Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'KDE.Krita'; name = 'Krita'; cat = 'Multimedia e foto'; desc = 'Krita is a professional FREE and open source painting program. It is made by artists that want to see affordable art tools for everyone.'; pub = 'Krita Foundation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'dotPDN.PaintDotNet'; name = 'paint.net'; cat = 'Multimedia e foto'; desc = 'An image and photo editing software for PCs that run Windows.'; pub = 'dotPDN LLC'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'XnSoft.XnView.Classic'; name = 'XnView'; cat = 'Multimedia e foto'; desc = 'Best Photo Viewer, Image Resizer & Batch Converter for Windows.'; pub = 'Gougelet Pierre-e'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'ClassicOldSong.Apollo'; name = 'Apollo'; cat = 'Gaming'; desc = 'Server di game streaming (fork di Sunshine) per Moonlight.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'maximmax42.CustomRP'; name = 'CustomRP'; cat = 'Gaming'; desc = 'Presenze Discord personalizzate.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'EpicGames.EpicGamesLauncher'; name = 'Epic Games Launcher'; cat = 'Gaming'; desc = 'Epic Games Launcher for the Epic Games Store and Unreal Engine'; pub = 'Epic Games, Inc.'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'EpicGames.EpicOnlineServices'; name = 'Epic Online Services'; cat = 'Gaming'; desc = 'Servizi online usati da alcuni giochi Epic.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'OuterWildsMods.OuterWildsModManager'; name = 'Outer Wilds Mod Manager'; cat = 'Gaming'; desc = 'Gestore mod per Outer Wilds.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'namazso.PawnIO'; name = 'PawnIO'; cat = 'Gaming'; desc = 'Driver kernel per accesso hardware a basso livello.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'PlayStation.PlayStationAccessories'; name = 'PlayStation Accessories'; cat = 'Gaming'; desc = 'Gestione accessori e controller PlayStation.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'PrismLauncher.PrismLauncher'; name = 'Prism Launcher'; cat = 'Gaming'; desc = 'Prism Launcher is an open-source Minecraft launcher with the ability to manage multiple instances, accounts, and mods.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'ebkr.r2modman'; name = 'r2modman'; cat = 'Gaming'; desc = 'Gestore mod per giochi Unity (Risk of Rain 2 e altri).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Datronicsoft.SpacedeskDriver.Server'; name = 'Spacedesk'; cat = 'Gaming'; desc = 'Trasforma tablet o cellulare in un secondo monitor.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Valve.Steam'; name = 'Steam'; cat = 'Gaming'; desc = 'Steam is the ultimate destination for playing, discussing, and creating games.'; pub = 'Valve Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'ViGEm.ViGEmBus'; name = 'ViGEmBus'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'VirtualDesktop.Streamer'; name = 'Virtual Desktop Streamer'; cat = 'Gaming'; desc = 'Virtual Desktop Streamer is a tool that allows you to stream your desktop screen to VR devices.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'NexusMods.Vortex'; name = 'Vortex'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'RamenSoftware.Windhawk'; name = 'Windhawk'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'HeroicGamesLauncher.HeroicGamesLauncher'; name = 'Heroic Games Launcher'; cat = 'Gaming'; desc = 'Heroic Games Launcher is an open-source alternative game launcher for Epic Games Store.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Google.ChromeRemoteDesktopHost'; name = 'Chrome Remote Desktop Host'; cat = 'Cloud e rete'; desc = 'Permette di controllare questo PC da remoto via Chrome.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Google.GoogleDrive'; name = 'Google Drive'; cat = 'Cloud e rete'; desc = 'Safely store your files and access them from any device.'; pub = 'Google LLC'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'LocalSend.LocalSend'; name = 'LocalSend'; cat = 'Cloud e rete'; desc = 'An open-source cross-platform alternative to AirDrop.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Nextcloud.NextcloudDesktop'; name = 'Nextcloud Desktop'; cat = 'Cloud e rete'; desc = 'Nextcloud Desktop is the official desktop client for the Nextcloud file synchronization and sharing platform.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'SSHFS-Win.SSHFS-Win'; name = 'SSHFS-Win'; cat = 'Cloud e rete'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'WinFsp.WinFsp'; name = 'WinFsp'; cat = 'Cloud e rete'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Dropbox.Dropbox'; name = 'Dropbox'; cat = 'Cloud e rete'; desc = 'Organize all your team''s content, tune out distractions, and get everyone coordinated with the world''s first smart workspace.'; pub = 'Dropbox, Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Apple.iCloud'; name = 'iCloud (Legacy)'; cat = 'Cloud e rete'; desc = 'With iCloud for Windows, you can access your photos, videos, mail, calendar, files, and other important information on your Windows PC.'; pub = 'Apple Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.OneDrive'; name = 'Microsoft OneDrive'; cat = 'Cloud e rete'; desc = 'Keep your files and memories protected, up to date, and easily accessible across all your devices.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'qBittorrent.qBittorrent'; name = 'qBittorrent'; cat = 'Cloud e rete'; desc = 'Free and reliable P2P Bittorent client.'; pub = 'The qBittorrent project'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'subhra74.XtremeDownloadManager'; name = 'Xtreme Download Manager'; cat = 'Cloud e rete'; desc = 'Xtreme Download Manager (XDM) is a powerful tool to increase download speeds up to 500%, save streaming videos from YouTube, DailyMotion, Facebook, Vimeo, Google Video and 1000+ other websites, resume broken/dead down...'; pub = 'subhra Das Gupta'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'AgileBits.1Password'; name = '1Password'; cat = 'Sicurezza e VPN'; desc = 'Top-Rated Password Manager for Personal & Business Use'; pub = 'AgileBits Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Bitwarden.Bitwarden'; name = 'Bitwarden'; cat = 'Sicurezza e VPN'; desc = 'A secure and free password manager for all of your devices.'; pub = 'Bitwarden Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'ESET.Nod32'; name = 'ESET Security'; cat = 'Sicurezza e VPN'; desc = 'Fast and light, vital for gamers and everyday users that dont want any interruptions. Just install and forget. Secures Windows and macOS devices.'; pub = 'ESET, spol. s r.o.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'KeeperSecurity.KeeperDesktop'; name = 'Keeper(R) Password Manager'; cat = 'Sicurezza e VPN'; desc = 'The top-rated password manager for protecting you, your family and your business from password-related data breaches and cyberthreats.'; pub = 'Keeper Security Inc'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'LastPass.LastPass'; name = 'LastPass'; cat = 'Sicurezza e VPN'; desc = 'An online password manager and form filler that makes web browsing easier and more secure.'; pub = 'LastPass US LP.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Malwarebytes.Malwarebytes'; name = 'Malwarebytes'; cat = 'Sicurezza e VPN'; desc = 'Cyber Security Software and Anti-Malware'; pub = 'Malwarebytes'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Klocman.BulkCrapUninstaller'; name = 'Bulk Crap Uninstaller'; cat = 'Sistema e tweaks'; desc = 'Bulk Crap Uninstaller is a free and open-source uninstaller utility for Windows. It helps users remove unwanted programs and clean up their system by uninstalling multiple applications at once.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'StartIsBack.StartAllBack'; name = 'StartAllBack'; cat = 'Sistema e tweaks'; desc = 'StartAllBack restores and improves Windows taskbar, Start menu, File Explorer, and shell UI behavior.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'StefanSundin.Superf4'; name = 'SuperF4'; cat = 'Sistema e tweaks'; desc = 'Chiude a forza l app in primo piano con Ctrl+Alt+F4.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'infinitepower18.WSASideloader'; name = 'WSA Sideloader'; cat = 'Sistema e tweaks'; desc = 'Installa APK nel Windows Subsystem for Android.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'rcmaehl.MSEdgeRedirect'; name = 'MSEdgeRedirect'; cat = 'Sistema e tweaks'; desc = 'A Tool to Redirect News, Search, Widgets, Weather, and More to your default browser.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Nilesoft.Shell'; name = 'Nilesoft Shell'; cat = 'Sistema e tweaks'; desc = 'Shell is an expanded context menu tool that adds extra functionality and customization options to the Windows context menu.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Devolutions.UniGetUI'; name = 'UniGetUI'; cat = 'Sistema e tweaks'; desc = 'UniGetUI is a GUI for WinGet, Chocolatey, and other Windows CLI package managers.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Microsoft.PowerToys'; name = 'PowerToys'; cat = 'Sistema e tweaks'; desc = 'Microsoft PowerToys is a set of utilities for power users to tune and streamline their Windows experience for greater productivity.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = '7zip.7zip'; name = '7-Zip'; cat = 'File e archivi'; desc = 'A file archiver with a high compression ratio.'; pub = 'Igor Pavlov'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'WinDirStat.WinDirStat'; name = 'WinDirStat'; cat = 'File e archivi'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'M2Team.NanaZip'; name = 'NanaZip'; cat = 'File e archivi'; desc = 'NanaZip is a fast and efficient file compression and decompression tool.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'AntibodySoftware.WizTree'; name = 'WizTree'; cat = 'File e archivi'; desc = 'WizTree is a fast disk space analyzer that helps you quickly find the files and folders consuming the most space on your hard drive.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'RARLab.WinRAR'; name = 'WinRAR'; cat = 'File e archivi'; desc = 'Compress, Encrypt, Package and Backup with only one utility.'; pub = 'win.rar GmbH'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Corel.WinZip'; name = 'WinZip'; cat = 'File e archivi'; desc = 'WinZip Compression Utility'; pub = 'Corel Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Bambulab.Bambustudio'; name = 'Bambu Studio'; cat = 'Hardware e monitoraggio'; desc = 'Slicer 3D per stampanti Bambu Lab.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'CrystalDewWorld.CrystalDiskInfo'; name = 'Crystal Disk Info'; cat = 'Hardware e monitoraggio'; desc = 'Crystal Disk Info is a disk health monitoring tool that provides information about the status and performance of hard drives. It helps users anticipate potential issues and monitor drive health.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'CrystalDewWorld.CrystalDiskMark'; name = 'Crystal Disk Mark'; cat = 'Hardware e monitoraggio'; desc = 'Crystal Disk Mark is a disk benchmarking tool that measures the read and write speeds of storage devices. It helps users assess the performance of their hard drives and SSDs.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = '9N1KVPCJP303'; name = 'HP Print Support'; cat = 'Hardware e monitoraggio'; desc = 'Componente di supporto per stampanti HP (Microsoft Store).'; pub = ''; src = 'msstore'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'OpenRGB.OpenRGB'; name = 'OpenRGB'; cat = 'Hardware e monitoraggio'; desc = 'OpenRGB is an open-source RGB lighting control software designed to manage and control RGB lighting for various components and peripherals.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'XP89DCGQ3K6VLD'; name = 'PowerToys (Store)'; cat = 'Hardware e monitoraggio'; desc = 'Utility di produttivita Microsoft (versione Microsoft Store).'; pub = ''; src = 'msstore'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'CPUID.CPU-Z'; name = 'CPU-Z'; cat = 'Hardware e monitoraggio'; desc = 'CPU-Z is a system monitoring and diagnostic tool for Windows. It provides detailed information about the computer''s hardware components, including the CPU, memory, and motherboard.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'TechPowerUp.GPU-Z'; name = 'GPU-Z'; cat = 'Hardware e monitoraggio'; desc = 'GPU-Z provides detailed information about your graphics card and GPU.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'Balena.Etcher'; name = 'Etcher'; cat = 'USB e masterizzazione'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Fedora.FedoraMediaWriter'; name = 'Fedora Media Writer'; cat = 'USB e masterizzazione'; desc = 'Scrive immagini Fedora su USB.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Rufus.Rufus'; name = 'Rufus Imager'; cat = 'USB e masterizzazione'; desc = 'Rufus is a utility that helps format and create bootable USB drives, such as USB keys or pen drives.'; pub = ''; src = 'winget'; preset = 'extra'; kind = 'pkg' },
-    @{ id = 'AnyDesk.AnyDesk'; name = 'AnyDesk'; cat = 'Remoto e supporto'; desc = 'AnyDesk is a remote desktop software that enables users to access and control computers remotely. It is known for its fast connection and low latency.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'TeamViewer.TeamViewer'; name = 'TeamViewer'; cat = 'Remoto e supporto'; desc = 'TeamViewer is a popular remote access and support software that allows you to connect to and control remote devices.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'PuTTY.PuTTY'; name = 'PuTTY'; cat = 'Remoto e supporto'; desc = 'A free implementation of SSH and Telnet for Windows and Unix platforms, along with an xterm terminal emulator.'; pub = 'Simon Tatham'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Splashtop.SplashtopBusiness'; name = 'Splashtop Business'; cat = 'Remoto e supporto'; desc = 'Splashtop Business - Secure Remote Access and Support'; pub = 'Splashtop Inc.'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Termius.Termius'; name = 'Termius'; cat = 'Remoto e supporto'; desc = 'Modern SSH client for Windows'; pub = 'Termius Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.DesktopRuntime.6'; name = '.NET Desktop Runtime 6'; cat = 'Runtime e librerie'; desc = '.NET Desktop Runtime 6 is a runtime environment required for running applications developed with .NET 6.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.AppInstaller'; name = 'App Installer (winget)'; cat = 'Runtime e librerie'; desc = 'Fornisce winget, il gestore pacchetti da riga di comando.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DirectX'; name = 'DirectX End-User Runtime'; cat = 'Runtime e librerie'; desc = 'Librerie DirectX per giochi piu vecchi.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.Native.Runtime'; name = 'DotNet Native Runtime'; cat = 'Runtime e librerie'; desc = 'Runtime .NET Native 2.2.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.SDK.10'; name = 'Microsoft .NET SDK 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.SDK.9'; name = 'Microsoft .NET SDK 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.DesktopRuntime.8'; name = 'Microsoft .NET Windows Desktop Runtime 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.DesktopRuntime.9'; name = 'Microsoft .NET Windows Desktop Runtime 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.GameInput'; name = 'Microsoft GameInput'; cat = 'Runtime e librerie'; desc = 'Libreria di input per giochi e controller.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.UI.Xaml.2.8'; name = 'Microsoft UI.Xaml 2.8'; cat = 'Runtime e librerie'; desc = 'Libreria di controlli XAML per app WinUI.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2008.x64'; name = 'Microsoft Visual C++ 2008 Redistributable - x64'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2008 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2008 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2008.x86'; name = 'Microsoft Visual C++ 2008 Redistributable - x86'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2008 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2008 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2010.x64'; name = 'Microsoft Visual C++ 2010 x64 Redistributable'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2010 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2010 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2010.x86'; name = 'Microsoft Visual C++ 2010 x86 Redistributable'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2010 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2010 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2013.x64'; name = 'Microsoft Visual C++ 2013 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2013 Redistributable Package (x64).'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2013.x86'; name = 'Microsoft Visual C++ 2013 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2013 Redistributable Package (x86)'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2015+.x64'; name = 'Microsoft Visual C++ v14 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ v14 Redistributable Package (x64).'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2015+.x86'; name = 'Microsoft Visual C++ v14 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ v14 Redistributable Package (x86)'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Nvidia.PhysX'; name = 'NVIDIA PhysX'; cat = 'Runtime e librerie'; desc = 'Motore fisico usato da molti giochi.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCLibs.14'; name = 'VCLibs 14'; cat = 'Runtime e librerie'; desc = 'Runtime Visual C++ per app UWP.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.VCLibs.Desktop.14'; name = 'VCLibs Desktop 14'; cat = 'Runtime e librerie'; desc = 'Runtime Visual C++ desktop per app UWP.'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsAppRuntime.1.5'; name = 'Windows App Runtime 1.5'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsAppRuntime.1.6'; name = 'Windows App Runtime 1.6'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsAppRuntime.1.7'; name = 'Windows App Runtime 1.7'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsAppRuntime.1.8'; name = 'Windows App Runtime 1.8'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.WindowsAppRuntime.2'; name = 'Windows App Runtime 2'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.Framework.Runtime'; name = 'Microsoft .NET Framework Runtime 4.8.1'; cat = 'Runtime e librerie'; desc = 'Do you want to run apps? The runtime includes everything you need to run existing apps/programs built with .NET Framework. Not necessarily to be confused with Microsoft .NET Runtime.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.Runtime.10'; name = 'Microsoft .NET Runtime 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.Runtime.8'; name = 'Microsoft .NET Runtime 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.Runtime.9'; name = 'Microsoft .NET Runtime 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.SDK.8'; name = 'Microsoft .NET SDK 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.DotNet.DesktopRuntime.10'; name = 'Microsoft .NET Windows Desktop Runtime 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2005.x64'; name = 'Microsoft Visual C++ 2005 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2005 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2005 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2005.x86'; name = 'Microsoft Visual C++ 2005 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2005 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2005 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2012.x64'; name = 'Microsoft Visual C++ 2012 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2012 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2012 on a computer that does not have Visua...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
-    @{ id = 'Microsoft.VCRedist.2012.x86'; name = 'Microsoft Visual C++ 2012 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2012 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2012 on a computer that does not have Visua...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.Edge'; name = 'Microsoft Edge'; cat = 'Browser'; desc = 'Microsoft Edge is a cross-platform web browser built for modern life.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'TheBrowserCompany.Arc'; name = 'Arc'; cat = 'Browser'; desc = 'Arc is a new browser that shapes itself to how you use the internet. It offers Spaces, Profiles, Split View, Themes, and more to organize and customize your online experience.'; pub = 'The Browser Company of New York'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Brave.Brave'; name = 'Brave'; cat = 'Browser'; desc = 'Secure, Fast & Private Web Browser with Adblocker'; pub = 'Brave Software Inc'; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'Google.Chrome'; name = 'Google Chrome'; cat = 'Browser'; desc = 'The Fast & Secure Web Browser Built to be Yours'; pub = 'Google LLC'; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'Mozilla.Firefox'; name = 'Mozilla Firefox (en-US)'; cat = 'Browser'; desc = 'Mozilla Firefox is free and open source software, built by a community of thousands from all over the world.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'Mozilla.Firefox.ESR'; name = 'Mozilla Firefox ESR (en-US)'; cat = 'Browser'; desc = 'Get the Firefox Extended Support Release or Rapid Release browser for comprehensive data security and data protection.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Opera.Opera'; name = 'Opera Stable'; cat = 'Browser'; desc = 'The Opera browser includes everything you need for private, safe, and efficient browsing, along with a variety of unique features to enhance your capabilities online.'; pub = 'Opera Software'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Vivaldi.Vivaldi'; name = 'Vivaldi'; cat = 'Browser'; desc = 'Powerful, Personal and Private web browser.'; pub = 'Vivaldi Technologies AS.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Yandex.Browser'; name = 'Yandex Browser'; cat = 'Browser'; desc = 'Yandex Browser delivers fast and secure browsing with built-in Alice and the ability to sync passwords, bookmarks, and bank cards across devices.'; pub = 'Yandex'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'SpikeHD.Dorion'; name = 'Dorion'; cat = 'Comunicazione'; desc = 'Tiny alternative Discord client with a smaller footprint, snappier startup, themes, plugins and more!'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.Teams'; name = 'Microsoft Teams'; cat = 'Comunicazione'; desc = 'Collaborate more effectively with a faster, simpler, smarter, and more flexible Teams.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.Outlook'; name = 'Outlook'; cat = 'Comunicazione'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Telegram.TelegramDesktop'; name = 'Telegram Desktop'; cat = 'Comunicazione'; desc = 'A cloud-based mobile and desktop messaging app with a focus on security and speed.'; pub = 'Telegram FZ-LLC'; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Vencord.Vesktop'; name = 'Vesktop'; cat = 'Comunicazione'; desc = 'A cross-platform electron-based desktop app aiming to give you a snappier Discord experience with Vencord pre-installed.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Discord.Discord.x86'; name = 'Discord (x86)'; cat = 'Comunicazione'; desc = 'Your Place to Talk and Hang Out.'; pub = 'Discord Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Mozilla.Thunderbird'; name = 'Mozilla Thunderbird (en-US)'; cat = 'Comunicazione'; desc = 'Thunderbird is a free email application that is easy to set up and customize - and it''s loaded with great features!'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Mozilla.Thunderbird.ESR'; name = 'Mozilla Thunderbird ESR (en-US)'; cat = 'Comunicazione'; desc = 'The official annual extended support release of Thunderbird intended for users who want all available new features on an annual basis and stability/security fixes on a monthly basis.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Pidgin.Pidgin'; name = 'Pidgin'; cat = 'Comunicazione'; desc = 'Pidgin is a universal chat client, allowing you to consolidate all your different messaging apps into a single tool.'; pub = 'Pidgin IM'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'SlackTechnologies.Slack'; name = 'Slack'; cat = 'Comunicazione'; desc = 'Slack brings the team together, wherever you are.'; pub = 'Slack Technologies Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'CeruleanStudios.Trillian'; name = 'Trillian'; cat = 'Comunicazione'; desc = 'A modern and secure instant messaging for people, business and healthcare'; pub = 'Cerulean Studios, LLC'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Cisco.Webex'; name = 'Webex'; cat = 'Comunicazione'; desc = 'With industry leading video conferencing, calling, and contact center solutions, Webex fuels hybrid work for businesses of all sizes.'; pub = 'Cisco Systems, Inc'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Zoom.Zoom'; name = 'Zoom Workplace'; cat = 'Comunicazione'; desc = 'Team Chat, Phone, Video & More'; pub = 'Zoom'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Apache.OpenOffice'; name = 'OpenOffice'; cat = 'Documenti'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'geeksoftwareGmbH.PDF24Creator'; name = 'PDF24 Creator'; cat = 'Documenti'; desc = 'Free and easy-to-use online/desktop PDF tools that make you more productive'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Adobe.Acrobat.Reader.64-bit'; name = 'Adobe Acrobat Reader (64-bit)'; cat = 'Documenti'; desc = 'The free global standard for reliably viewing, printing, signing, and commenting on PDF documents.'; pub = 'Adobe'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'AcroSoftware.CutePDFWriter'; name = 'CutePDF Writer'; cat = 'Documenti'; desc = 'Create PDFs from almost any application'; pub = 'Acro Software Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Evernote.Evernote'; name = 'Evernote'; cat = 'Documenti'; desc = 'Remember everything and tackle any project with your notes, tasks, and schedule all in one place.'; pub = 'Evernote Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Foxit.FoxitReader.Inno'; name = 'Foxit PDF Reader'; cat = 'Documenti'; desc = 'Industrys most powerful PDF Reader Solution.'; pub = 'Foxit Software Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'TheDocumentFoundation.LibreOffice'; name = 'LibreOffice'; cat = 'Documenti'; desc = 'LibreOffice is a free and powerful office suite, and a successor to OpenOffice.org (commonly known as OpenOffice). Its clean interface and feature-rich tools help you unleash your creativity and enhance your productiv...'; pub = 'The Document Foundation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.Office'; name = 'Microsoft 365 Apps for enterprise'; cat = 'Documenti'; desc = 'The most productive and most secure Office experience for enterprises, allowing your teams to work together seamlessly from anywhere, anytime.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Notion.Notion'; name = 'Notion'; cat = 'Documenti'; desc = 'A new tool that blends your everyday work apps into one. It''s the all-in-one workspace for you and your team.'; pub = 'Notion Labs, Inc'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Kingsoft.WPSOffice'; name = 'WPS Office'; cat = 'Documenti'; desc = 'A free office suite fully compatible with Microsoft Office'; pub = 'Kingsoft Corp.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Xmind.Xmind'; name = 'Xmind'; cat = 'Documenti'; desc = 'A full-featured Swiss Army Knife for your brain.'; pub = 'XMIND LTD.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Google.PlatformTools'; name = 'Android Platform Tools'; cat = 'Sviluppo'; desc = 'adb, fastboot e gli altri strumenti da riga di comando per Android.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Google.AndroidStudio'; name = 'Android Studio'; cat = 'Sviluppo'; desc = 'IDE ufficiale per lo sviluppo Android (include l emulatore).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'ArduinoSA.IDE.stable'; name = 'Arduino IDE'; cat = 'Sviluppo'; desc = 'IDE per programmare schede Arduino.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Anthropic.Claude'; name = 'Claude Desktop'; cat = 'Sviluppo'; desc = 'Anthropic''s Claude desktop application for focused AI-assisted work and chat.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Kitware.CMake'; name = 'CMake'; cat = 'Sviluppo'; desc = 'CMake is an open-source, cross-platform family of tools designed to build, test and package software.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'DenoLand.Deno'; name = 'Deno'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.17.JDK'; name = 'Eclipse Temurin JDK with Hotspot 17'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Git.Git'; name = 'Git'; cat = 'Sviluppo'; desc = 'A free and open source distributed version control system'; pub = 'The Git Development Community'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'GitHub.cli'; name = 'GitHub CLI'; cat = 'Sviluppo'; desc = 'GitHub CLI brings pull requests, issues, releases, and other GitHub workflows to the terminal.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'GoLang.Go'; name = 'Go'; cat = 'Sviluppo'; desc = 'Go (or Golang) is a statically typed, compiled programming language designed for simplicity, reliability, and efficiency.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Oracle.JavaRuntimeEnvironment'; name = 'Java 8'; cat = 'Sviluppo'; desc = 'Java allows you to play online games, chat with people around the world, calculate your mortgage interest, and view images in 3D, just to name a few.'; pub = 'Oracle Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Ninja-build.Ninja'; name = 'Ninja'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'OpenJS.NodeJS'; name = 'NodeJS'; cat = 'Sviluppo'; desc = 'NodeJS is a JavaScript runtime built on Chrome''s V8 JavaScript engine for building server-side and networking applications.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Notepad++.Notepad++'; name = 'Notepad++'; cat = 'Sviluppo'; desc = 'Notepad++ is a free source code editor that supports several languages.'; pub = 'Notepad++ Team'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'Ollama.Ollama'; name = 'Ollama'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'SST.opencode'; name = 'opencode'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.PowerShell'; name = 'PowerShell'; cat = 'Sviluppo'; desc = 'PowerShell is a task automation framework and scripting language designed for system administrators, offering powerful command-line capabilities.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Python.Python.3.14'; name = 'Python 3.14'; cat = 'Sviluppo'; desc = 'A programming language that lets you work more quickly and integrate your systems more effectively.'; pub = 'Python Software Foundation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Python.Launcher'; name = 'Python Launcher'; cat = 'Sviluppo'; desc = 'Avvia le versioni di Python installate (comando py).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Rustlang.Rustup'; name = 'Rustup'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'StrawberryPerl.StrawberryPerl'; name = 'StrawberryPerl'; cat = 'Sviluppo'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'astral-sh.uv'; name = 'uv'; cat = 'Sviluppo'; desc = 'uv is a fast Python package and project manager written in Rust.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VisualStudio.2022.Community'; name = 'Visual Studio 2022'; cat = 'Sviluppo'; desc = 'Visual Studio 2022 is an integrated development environment (IDE) for building, debugging, and deploying applications.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsTerminal'; name = 'Windows Terminal'; cat = 'Sviluppo'; desc = 'Windows Terminal is a modern, fast, and efficient terminal application for command-line users, supporting multiple tabs, panes, and more.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VisualStudioCode'; name = 'Microsoft Visual Studio Code'; cat = 'Sviluppo'; desc = 'Microsoft Visual Studio Code is a code editor redefined and optimized for building and debugging modern web and cloud applications. Microsoft Visual Studio Code is free and available on your favorite platform - Linux,...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'extra'; ez = '1'; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.11.JDK'; name = 'Amazon Corretto 11'; cat = 'Sviluppo'; desc = 'Amazon Corretto 11 is a Long-Term Supported (LTS) distribution of OpenJDK 11'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.17.JDK'; name = 'Amazon Corretto 17'; cat = 'Sviluppo'; desc = 'Amazon Corretto 17 is a Long-Term Supported (LTS) distribution of OpenJDK 17'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.21.JDK'; name = 'Amazon Corretto 21'; cat = 'Sviluppo'; desc = 'Amazon Corretto 21 is a Long-Term Supported (LTS) distribution of OpenJDK 21'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.25.JDK'; name = 'Amazon Corretto 25'; cat = 'Sviluppo'; desc = 'Amazon Corretto 25 is a distribution of OpenJDK 25'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.8.JDK'; name = 'Amazon Corretto 8'; cat = 'Sviluppo'; desc = 'Amazon Corretto 8 is a Long-Term Supported (LTS) distribution of OpenJDK 8'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Amazon.Corretto.8.JRE'; name = 'Amazon Corretto JRE 8'; cat = 'Sviluppo'; desc = 'Amazon Corretto JRE 8 is a Long-Term Supported (LTS) distribution of OpenJRE 8'; pub = 'Amazon'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Anysphere.Cursor'; name = 'Cursor'; cat = 'Sviluppo'; desc = 'The AI Code Editor'; pub = 'Anysphere'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Docker.DockerDesktop'; name = 'Docker Desktop'; cat = 'Sviluppo'; desc = 'An application for the building and sharing of containerized applications.'; pub = 'Docker Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.11.JDK'; name = 'Eclipse Temurin JDK with Hotspot 11'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.21.JDK'; name = 'Eclipse Temurin JDK with Hotspot 21'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.25.JDK'; name = 'Eclipse Temurin JDK with Hotspot 25'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.8.JDK'; name = 'Eclipse Temurin JDK with Hotspot 8'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JDK is the open source Java SE build based upon OpenJDK.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.11.JRE'; name = 'Eclipse Temurin JRE with Hotspot 11'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.17.JRE'; name = 'Eclipse Temurin JRE with Hotspot 17'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.21.JRE'; name = 'Eclipse Temurin JRE with Hotspot 21'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.25.JRE'; name = 'Eclipse Temurin JRE with Hotspot 25'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'EclipseAdoptium.Temurin.8.JRE'; name = 'Eclipse Temurin JRE with Hotspot 8'; cat = 'Sviluppo'; desc = 'Eclipse Temurin JRE is the open source Java SE build based upon OpenJRE.'; pub = 'Eclipse Adoptium'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Oracle.JDK.17'; name = 'Java(TM) SE Development Kit 17'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Oracle.JDK.21'; name = 'Java(TM) SE Development Kit 21'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Oracle.JDK.25'; name = 'Java(TM) SE Development Kit 25'; cat = 'Sviluppo'; desc = 'The JDK is a development environment for building applications and components using the Java programming language.'; pub = 'Oracle Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Ngrok.Ngrok'; name = 'Ngrok'; cat = 'Sviluppo'; desc = 'Tunnel local ports to public URLs and inspect traffic'; pub = 'ngrok, Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Python.Python.3.13'; name = 'Python 3.13'; cat = 'Sviluppo'; desc = 'Python is a programming language that lets you work more quickly and integrate your systems more effectively.'; pub = 'Python Software Foundation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Python.PythonInstallManager'; name = 'Python Install Manager'; cat = 'Sviluppo'; desc = 'Install, manage, and launch Python on Windows.'; pub = 'Python Software Foundation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'WinMerge.WinMerge'; name = 'WinMerge'; cat = 'Sviluppo'; desc = 'WinMerge is an open source differencing and merging tool for Windows.'; pub = 'Thingamahoochie Software'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Canva.Affinity'; name = 'Affinity'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'VictorAlves.Aonsoku'; name = 'Aonsoku'; cat = 'Multimedia e foto'; desc = 'Client desktop per server musicali Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'jeffvli.Feishin'; name = 'Feishin'; cat = 'Multimedia e foto'; desc = 'Player musicale per server Navidrome/Jellyfin/Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'yt-dlp.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Gyan.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'HandBrake.HandBrake'; name = 'HandBrake'; cat = 'Multimedia e foto'; desc = 'HandBrake is an open-source video transcoder, allowing you to convert video from nearly any format to a selection of widely supported codecs.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Daum.PotPlayer'; name = 'PotPlayer'; cat = 'Multimedia e foto'; desc = 'Powerful multimedia player that supports a variety of different video codecs and formats.'; pub = 'Kakao Corp.'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'ShareX.ShareX'; name = 'ShareX'; cat = 'Multimedia e foto'; desc = 'Screen capture, file sharing and productivity tool'; pub = 'ShareX Team'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'Spotify.Spotify'; name = 'Spotify'; cat = 'Multimedia e foto'; desc = 'All the music youll ever need.'; pub = 'Spotify AB'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'TenacityTeam.Tenacity'; name = 'Tenacity'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'VideoLAN.VLC'; name = 'VLC media player'; cat = 'Multimedia e foto'; desc = 'VLC is a free and open source cross-platform multimedia player and framework that plays most multimedia files, and various streaming protocols.'; pub = 'VideoLAN'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'yt-dlp.yt-dlp'; name = 'yt-dlp'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'AdrienAllard.FileConverter'; name = 'File Converter'; cat = 'Multimedia e foto'; desc = 'File Converter converts and compresses files from the Windows Explorer context menu.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'shinchiro.mpv'; name = 'mpv'; cat = 'Multimedia e foto'; desc = 'mpv is a free, open source, and cross-platform media player supporting a wide variety of media formats, codecs, and subtitle types.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'OBSProject.OBSStudio'; name = 'OBS Studio'; cat = 'Multimedia e foto'; desc = 'Free and open source software for video recording and live streaming.'; pub = 'OBS Project'; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'BlenderFoundation.Blender'; name = 'blender'; cat = 'Multimedia e foto'; desc = 'Free and Open 3D Creation Software'; pub = 'Blender Foundation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'ByteDance.CapCut'; name = 'CapCut'; cat = 'Multimedia e foto'; desc = 'A video editing tool packed with features on your desktop or laptop'; pub = 'Bytedance Pte. Ltd.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'FastStone.Viewer'; name = 'FastStone Image Viewer'; cat = 'Multimedia e foto'; desc = 'FastStone Image Viewer is a fast, stable, user-friendly image browser, converter and editor.'; pub = 'FastStone Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'GIMP.GIMP.3'; name = 'GIMP'; cat = 'Multimedia e foto'; desc = 'GIMP is an acronym for GNU Image Manipulation Program. It is a freely distributed program for such tasks as photo retouching, image composition and image authoring.'; pub = 'The GIMP Team'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Google.EarthPro'; name = 'Google Earth Pro'; cat = 'Multimedia e foto'; desc = 'The world''s most detailed globe'; pub = 'Google'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Greenshot.Greenshot'; name = 'Greenshot'; cat = 'Multimedia e foto'; desc = 'A light-weight screenshot software tool for Windows.'; pub = 'Greenshot'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Inkscape.Inkscape'; name = 'Inkscape'; cat = 'Multimedia e foto'; desc = 'A professional vector graphics software which runs on Linux, macOS and Windows desktop computers.'; pub = 'Inkscape'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'IrfanSkiljan.IrfanView'; name = 'IrfanView'; cat = 'Multimedia e foto'; desc = 'Fast and compact image viewer and converter'; pub = 'Irfan Skiljan'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Apple.iTunes'; name = 'iTunes'; cat = 'Multimedia e foto'; desc = 'iTunes offers the worlds best way to play  and add to  your collection of music, movies, TV shows, podcasts, audiobooks, and more.'; pub = 'Apple Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'KDE.Krita'; name = 'Krita'; cat = 'Multimedia e foto'; desc = 'Krita is a professional FREE and open source painting program. It is made by artists that want to see affordable art tools for everyone.'; pub = 'Krita Foundation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'dotPDN.PaintDotNet'; name = 'paint.net'; cat = 'Multimedia e foto'; desc = 'An image and photo editing software for PCs that run Windows.'; pub = 'dotPDN LLC'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'XnSoft.XnView.Classic'; name = 'XnView'; cat = 'Multimedia e foto'; desc = 'Best Photo Viewer, Image Resizer & Batch Converter for Windows.'; pub = 'Gougelet Pierre-e'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'ClassicOldSong.Apollo'; name = 'Apollo'; cat = 'Gaming'; desc = 'Server di game streaming (fork di Sunshine) per Moonlight.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'maximmax42.CustomRP'; name = 'CustomRP'; cat = 'Gaming'; desc = 'Presenze Discord personalizzate.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'EpicGames.EpicGamesLauncher'; name = 'Epic Games Launcher'; cat = 'Gaming'; desc = 'Epic Games Launcher for the Epic Games Store and Unreal Engine'; pub = 'Epic Games, Inc.'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'EpicGames.EpicOnlineServices'; name = 'Epic Online Services'; cat = 'Gaming'; desc = 'Servizi online usati da alcuni giochi Epic.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'OuterWildsMods.OuterWildsModManager'; name = 'Outer Wilds Mod Manager'; cat = 'Gaming'; desc = 'Gestore mod per Outer Wilds.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'namazso.PawnIO'; name = 'PawnIO'; cat = 'Gaming'; desc = 'Driver kernel per accesso hardware a basso livello.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'PlayStation.PlayStationAccessories'; name = 'PlayStation Accessories'; cat = 'Gaming'; desc = 'Gestione accessori e controller PlayStation.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'PrismLauncher.PrismLauncher'; name = 'Prism Launcher'; cat = 'Gaming'; desc = 'Prism Launcher is an open-source Minecraft launcher with the ability to manage multiple instances, accounts, and mods.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'ebkr.r2modman'; name = 'r2modman'; cat = 'Gaming'; desc = 'Gestore mod per giochi Unity (Risk of Rain 2 e altri).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Datronicsoft.SpacedeskDriver.Server'; name = 'Spacedesk'; cat = 'Gaming'; desc = 'Trasforma tablet o cellulare in un secondo monitor.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Valve.Steam'; name = 'Steam'; cat = 'Gaming'; desc = 'Steam is the ultimate destination for playing, discussing, and creating games.'; pub = 'Valve Corporation'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'ViGEm.ViGEmBus'; name = 'ViGEmBus'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'VirtualDesktop.Streamer'; name = 'Virtual Desktop Streamer'; cat = 'Gaming'; desc = 'Virtual Desktop Streamer is a tool that allows you to stream your desktop screen to VR devices.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'NexusMods.Vortex'; name = 'Vortex'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'RamenSoftware.Windhawk'; name = 'Windhawk'; cat = 'Gaming'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'HeroicGamesLauncher.HeroicGamesLauncher'; name = 'Heroic Games Launcher'; cat = 'Gaming'; desc = 'Heroic Games Launcher is an open-source alternative game launcher for Epic Games Store.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Google.ChromeRemoteDesktopHost'; name = 'Chrome Remote Desktop Host'; cat = 'Cloud e rete'; desc = 'Permette di controllare questo PC da remoto via Chrome.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Google.GoogleDrive'; name = 'Google Drive'; cat = 'Cloud e rete'; desc = 'Safely store your files and access them from any device.'; pub = 'Google LLC'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'LocalSend.LocalSend'; name = 'LocalSend'; cat = 'Cloud e rete'; desc = 'An open-source cross-platform alternative to AirDrop.'; pub = ''; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'Nextcloud.NextcloudDesktop'; name = 'Nextcloud Desktop'; cat = 'Cloud e rete'; desc = 'Nextcloud Desktop is the official desktop client for the Nextcloud file synchronization and sharing platform.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'SSHFS-Win.SSHFS-Win'; name = 'SSHFS-Win'; cat = 'Cloud e rete'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'WinFsp.WinFsp'; name = 'WinFsp'; cat = 'Cloud e rete'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Dropbox.Dropbox'; name = 'Dropbox'; cat = 'Cloud e rete'; desc = 'Organize all your team''s content, tune out distractions, and get everyone coordinated with the world''s first smart workspace.'; pub = 'Dropbox, Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Apple.iCloud'; name = 'iCloud (Legacy)'; cat = 'Cloud e rete'; desc = 'With iCloud for Windows, you can access your photos, videos, mail, calendar, files, and other important information on your Windows PC.'; pub = 'Apple Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.OneDrive'; name = 'Microsoft OneDrive'; cat = 'Cloud e rete'; desc = 'Keep your files and memories protected, up to date, and easily accessible across all your devices.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'qBittorrent.qBittorrent'; name = 'qBittorrent'; cat = 'Cloud e rete'; desc = 'Free and reliable P2P Bittorent client.'; pub = 'The qBittorrent project'; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'Syncthing.Syncthing'; name = 'Syncthing (CLI / Web UI)'; cat = 'Cloud e rete'; desc = 'Syncthing is a decentralized, peer-to-peer file synchronization tool that securely syncs files directly across devices without cloud servers, managed via a local web interface.'; pub = ''; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'subhra74.XtremeDownloadManager'; name = 'Xtreme Download Manager'; cat = 'Cloud e rete'; desc = 'Xtreme Download Manager (XDM) is a powerful tool to increase download speeds up to 500%, save streaming videos from YouTube, DailyMotion, Facebook, Vimeo, Google Video and 1000+ other websites, resume broken/dead down...'; pub = 'subhra Das Gupta'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'AgileBits.1Password'; name = '1Password'; cat = 'Sicurezza e VPN'; desc = 'Top-Rated Password Manager for Personal & Business Use'; pub = 'AgileBits Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Bitwarden.Bitwarden'; name = 'Bitwarden'; cat = 'Sicurezza e VPN'; desc = 'A secure and free password manager for all of your devices.'; pub = 'Bitwarden Inc.'; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'ESET.Nod32'; name = 'ESET Security'; cat = 'Sicurezza e VPN'; desc = 'Fast and light, vital for gamers and everyday users that dont want any interruptions. Just install and forget. Secures Windows and macOS devices.'; pub = 'ESET, spol. s r.o.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'KeeperSecurity.KeeperDesktop'; name = 'Keeper(R) Password Manager'; cat = 'Sicurezza e VPN'; desc = 'The top-rated password manager for protecting you, your family and your business from password-related data breaches and cyberthreats.'; pub = 'Keeper Security Inc'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'LastPass.LastPass'; name = 'LastPass'; cat = 'Sicurezza e VPN'; desc = 'An online password manager and form filler that makes web browsing easier and more secure.'; pub = 'LastPass US LP.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Malwarebytes.Malwarebytes'; name = 'Malwarebytes'; cat = 'Sicurezza e VPN'; desc = 'Cyber Security Software and Anti-Malware'; pub = 'Malwarebytes'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Klocman.BulkCrapUninstaller'; name = 'Bulk Crap Uninstaller'; cat = 'Sistema e tweaks'; desc = 'Bulk Crap Uninstaller is a free and open-source uninstaller utility for Windows. It helps users remove unwanted programs and clean up their system by uninstalling multiple applications at once.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'StartIsBack.StartAllBack'; name = 'StartAllBack'; cat = 'Sistema e tweaks'; desc = 'StartAllBack restores and improves Windows taskbar, Start menu, File Explorer, and shell UI behavior.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'StefanSundin.Superf4'; name = 'SuperF4'; cat = 'Sistema e tweaks'; desc = 'Chiude a forza l app in primo piano con Ctrl+Alt+F4.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'infinitepower18.WSASideloader'; name = 'WSA Sideloader'; cat = 'Sistema e tweaks'; desc = 'Installa APK nel Windows Subsystem for Android.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'rcmaehl.MSEdgeRedirect'; name = 'MSEdgeRedirect'; cat = 'Sistema e tweaks'; desc = 'A Tool to Redirect News, Search, Widgets, Weather, and More to your default browser.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Nilesoft.Shell'; name = 'Nilesoft Shell'; cat = 'Sistema e tweaks'; desc = 'Shell is an expanded context menu tool that adds extra functionality and customization options to the Windows context menu.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Devolutions.UniGetUI'; name = 'UniGetUI'; cat = 'Sistema e tweaks'; desc = 'UniGetUI is a GUI for WinGet, Chocolatey, and other Windows CLI package managers.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.PowerToys'; name = 'PowerToys'; cat = 'Sistema e tweaks'; desc = 'Microsoft PowerToys is a set of utilities for power users to tune and streamline their Windows experience for greater productivity.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = '7zip.7zip'; name = '7-Zip'; cat = 'File e archivi'; desc = 'A file archiver with a high compression ratio.'; pub = 'Igor Pavlov'; src = 'winget'; preset = 'mine'; ez = '1'; kind = 'pkg' },
+    @{ id = 'WinDirStat.WinDirStat'; name = 'WinDirStat'; cat = 'File e archivi'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'M2Team.NanaZip'; name = 'NanaZip'; cat = 'File e archivi'; desc = 'NanaZip is a fast and efficient file compression and decompression tool.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'AntibodySoftware.WizTree'; name = 'WizTree'; cat = 'File e archivi'; desc = 'WizTree is a fast disk space analyzer that helps you quickly find the files and folders consuming the most space on your hard drive.'; pub = ''; src = 'winget'; preset = 'extra'; ez = '1'; kind = 'pkg' },
+    @{ id = 'RARLab.WinRAR'; name = 'WinRAR'; cat = 'File e archivi'; desc = 'Compress, Encrypt, Package and Backup with only one utility.'; pub = 'win.rar GmbH'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Corel.WinZip'; name = 'WinZip'; cat = 'File e archivi'; desc = 'WinZip Compression Utility'; pub = 'Corel Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Bambulab.Bambustudio'; name = 'Bambu Studio'; cat = 'Hardware e monitoraggio'; desc = 'Slicer 3D per stampanti Bambu Lab.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'CrystalDewWorld.CrystalDiskInfo'; name = 'Crystal Disk Info'; cat = 'Hardware e monitoraggio'; desc = 'Crystal Disk Info is a disk health monitoring tool that provides information about the status and performance of hard drives. It helps users anticipate potential issues and monitor drive health.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'CrystalDewWorld.CrystalDiskMark'; name = 'Crystal Disk Mark'; cat = 'Hardware e monitoraggio'; desc = 'Crystal Disk Mark is a disk benchmarking tool that measures the read and write speeds of storage devices. It helps users assess the performance of their hard drives and SSDs.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = '9N1KVPCJP303'; name = 'HP Print Support'; cat = 'Hardware e monitoraggio'; desc = 'Componente di supporto per stampanti HP (Microsoft Store).'; pub = ''; src = 'msstore'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'OpenRGB.OpenRGB'; name = 'OpenRGB'; cat = 'Hardware e monitoraggio'; desc = 'OpenRGB is an open-source RGB lighting control software designed to manage and control RGB lighting for various components and peripherals.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'XP89DCGQ3K6VLD'; name = 'PowerToys (Store)'; cat = 'Hardware e monitoraggio'; desc = 'Utility di produttivita Microsoft (versione Microsoft Store).'; pub = ''; src = 'msstore'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'CPUID.CPU-Z'; name = 'CPU-Z'; cat = 'Hardware e monitoraggio'; desc = 'CPU-Z is a system monitoring and diagnostic tool for Windows. It provides detailed information about the computer''s hardware components, including the CPU, memory, and motherboard.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'TechPowerUp.GPU-Z'; name = 'GPU-Z'; cat = 'Hardware e monitoraggio'; desc = 'GPU-Z provides detailed information about your graphics card and GPU.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Balena.Etcher'; name = 'Etcher'; cat = 'USB e masterizzazione'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Fedora.FedoraMediaWriter'; name = 'Fedora Media Writer'; cat = 'USB e masterizzazione'; desc = 'Scrive immagini Fedora su USB.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Rufus.Rufus'; name = 'Rufus Imager'; cat = 'USB e masterizzazione'; desc = 'Rufus is a utility that helps format and create bootable USB drives, such as USB keys or pen drives.'; pub = ''; src = 'winget'; preset = 'extra'; ez = ''; kind = 'pkg' },
+    @{ id = 'Ventoy.Ventoy'; name = 'Ventoy'; cat = 'USB e masterizzazione'; desc = 'Ventoy is an open-source tool for creating bootable USB drives. It supports multiple ISO files on a single USB drive, making it a versatile solution for installing operating systems.'; pub = ''; src = 'winget'; preset = ''; ez = '1'; kind = 'pkg' },
+    @{ id = 'AnyDesk.AnyDesk'; name = 'AnyDesk'; cat = 'Remoto e supporto'; desc = 'AnyDesk is a remote desktop software that enables users to access and control computers remotely. It is known for its fast connection and low latency.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'TeamViewer.TeamViewer'; name = 'TeamViewer'; cat = 'Remoto e supporto'; desc = 'TeamViewer is a popular remote access and support software that allows you to connect to and control remote devices.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'PuTTY.PuTTY'; name = 'PuTTY'; cat = 'Remoto e supporto'; desc = 'A free implementation of SSH and Telnet for Windows and Unix platforms, along with an xterm terminal emulator.'; pub = 'Simon Tatham'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Splashtop.SplashtopBusiness'; name = 'Splashtop Business'; cat = 'Remoto e supporto'; desc = 'Splashtop Business - Secure Remote Access and Support'; pub = 'Splashtop Inc.'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Termius.Termius'; name = 'Termius'; cat = 'Remoto e supporto'; desc = 'Modern SSH client for Windows'; pub = 'Termius Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.DesktopRuntime.6'; name = '.NET Desktop Runtime 6'; cat = 'Runtime e librerie'; desc = '.NET Desktop Runtime 6 is a runtime environment required for running applications developed with .NET 6.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.AppInstaller'; name = 'App Installer (winget)'; cat = 'Runtime e librerie'; desc = 'Fornisce winget, il gestore pacchetti da riga di comando.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DirectX'; name = 'DirectX End-User Runtime'; cat = 'Runtime e librerie'; desc = 'Librerie DirectX per giochi piu vecchi.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.Native.Runtime'; name = 'DotNet Native Runtime'; cat = 'Runtime e librerie'; desc = 'Runtime .NET Native 2.2.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.SDK.10'; name = 'Microsoft .NET SDK 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.SDK.9'; name = 'Microsoft .NET SDK 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.DesktopRuntime.8'; name = 'Microsoft .NET Windows Desktop Runtime 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.DesktopRuntime.9'; name = 'Microsoft .NET Windows Desktop Runtime 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.GameInput'; name = 'Microsoft GameInput'; cat = 'Runtime e librerie'; desc = 'Libreria di input per giochi e controller.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.UI.Xaml.2.8'; name = 'Microsoft UI.Xaml 2.8'; cat = 'Runtime e librerie'; desc = 'Libreria di controlli XAML per app WinUI.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2008.x64'; name = 'Microsoft Visual C++ 2008 Redistributable - x64'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2008 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2008 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2008.x86'; name = 'Microsoft Visual C++ 2008 Redistributable - x86'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2008 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2008 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2010.x64'; name = 'Microsoft Visual C++ 2010 x64 Redistributable'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2010 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2010 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2010.x86'; name = 'Microsoft Visual C++ 2010 x86 Redistributable'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2010 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2010 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2013.x64'; name = 'Microsoft Visual C++ 2013 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2013 Redistributable Package (x64).'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2013.x86'; name = 'Microsoft Visual C++ 2013 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2013 Redistributable Package (x86)'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2015+.x64'; name = 'Microsoft Visual C++ v14 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ v14 Redistributable Package (x64).'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2015+.x86'; name = 'Microsoft Visual C++ v14 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ v14 Redistributable Package (x86)'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Nvidia.PhysX'; name = 'NVIDIA PhysX'; cat = 'Runtime e librerie'; desc = 'Motore fisico usato da molti giochi.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCLibs.14'; name = 'VCLibs 14'; cat = 'Runtime e librerie'; desc = 'Runtime Visual C++ per app UWP.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCLibs.Desktop.14'; name = 'VCLibs Desktop 14'; cat = 'Runtime e librerie'; desc = 'Runtime Visual C++ desktop per app UWP.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsAppRuntime.1.5'; name = 'Windows App Runtime 1.5'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsAppRuntime.1.6'; name = 'Windows App Runtime 1.6'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsAppRuntime.1.7'; name = 'Windows App Runtime 1.7'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsAppRuntime.1.8'; name = 'Windows App Runtime 1.8'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.WindowsAppRuntime.2'; name = 'Windows App Runtime 2'; cat = 'Runtime e librerie'; desc = 'Runtime per app Windows moderne (WinUI).'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.Framework.Runtime'; name = 'Microsoft .NET Framework Runtime 4.8.1'; cat = 'Runtime e librerie'; desc = 'Do you want to run apps? The runtime includes everything you need to run existing apps/programs built with .NET Framework. Not necessarily to be confused with Microsoft .NET Runtime.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.Runtime.10'; name = 'Microsoft .NET Runtime 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.Runtime.8'; name = 'Microsoft .NET Runtime 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.Runtime.9'; name = 'Microsoft .NET Runtime 9.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.SDK.8'; name = 'Microsoft .NET SDK 8.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.DotNet.DesktopRuntime.10'; name = 'Microsoft .NET Windows Desktop Runtime 10.0'; cat = 'Runtime e librerie'; desc = '.NET is a free, cross-platform, open-source developer platform for building many different types of applications.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2005.x64'; name = 'Microsoft Visual C++ 2005 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2005 SP1 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2005 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2005.x86'; name = 'Microsoft Visual C++ 2005 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2005 SP1 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2005 SP1 on a computer that does not ha...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2012.x64'; name = 'Microsoft Visual C++ 2012 Redistributable (x64)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2012 Redistributable Package (x64) installs runtime components of Visual C++ Libraries required to run 64-bit applications developed with Visual C++ 2012 on a computer that does not have Visua...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
+    @{ id = 'Microsoft.VCRedist.2012.x86'; name = 'Microsoft Visual C++ 2012 Redistributable (x86)'; cat = 'Runtime e librerie'; desc = 'The Microsoft Visual C++ 2012 Redistributable Package (x86) installs runtime components of Visual C++ Libraries required to run 32-bit applications developed with Visual C++ 2012 on a computer that does not have Visua...'; pub = 'Microsoft Corporation'; src = 'winget'; preset = ''; ez = ''; kind = 'pkg' },
     @{ id = 'mouse-1to1-100'; name = 'Mouse Fix 1:1 @6/11 - ItemsSize 100%'; cat = 'Mouse'; preset = ''; kind = 'mouse'; scale = '100'; sens = '10'; x = '00,00,00,00,00,00,00,00,C0,CC,0C,00,00,00,00,00,80,99,19,00,00,00,00,00,40,66,26,00,00,00,00,00,00,33,33,00,00,00,00,00'; y = '00,00,00,00,00,00,00,00,00,00,38,00,00,00,00,00,00,00,70,00,00,00,00,00,00,00,A8,00,00,00,00,00,00,00,E0,00,00,00,00,00'; speed = '0'; t1 = '0'; t2 = '0'; desc = 'Curva MarkC 1:1, sensibilita 6/11. Vale per ItemsSize 100%. Serve ''Enhance pointer precision'' attiva per i giochi che la forzano.' },
     @{ id = 'mouse-1to1-125'; name = 'Mouse Fix 1:1 @6/11 - ItemsSize 125%'; cat = 'Mouse'; preset = ''; kind = 'mouse'; scale = '125'; sens = '10'; x = '00,00,00,00,00,00,00,00,00,00,10,00,00,00,00,00,00,00,20,00,00,00,00,00,00,00,30,00,00,00,00,00,00,00,40,00,00,00,00,00'; y = '00,00,00,00,00,00,00,00,00,00,38,00,00,00,00,00,00,00,70,00,00,00,00,00,00,00,A8,00,00,00,00,00,00,00,E0,00,00,00,00,00'; speed = '0'; t1 = '0'; t2 = '0'; desc = 'Curva MarkC 1:1, sensibilita 6/11. Vale per ItemsSize 125%. Serve ''Enhance pointer precision'' attiva per i giochi che la forzano.' },
     @{ id = 'mouse-1to1-150'; name = 'Mouse Fix 1:1 @6/11 - ItemsSize 150%'; cat = 'Mouse'; preset = ''; kind = 'mouse'; scale = '150'; sens = '10'; x = '00,00,00,00,00,00,00,00,30,33,13,00,00,00,00,00,60,66,26,00,00,00,00,00,90,99,39,00,00,00,00,00,C0,CC,4C,00,00,00,00,00'; y = '00,00,00,00,00,00,00,00,00,00,38,00,00,00,00,00,00,00,70,00,00,00,00,00,00,00,A8,00,00,00,00,00,00,00,E0,00,00,00,00,00'; speed = '0'; t1 = '0'; t2 = '0'; desc = 'Curva MarkC 1:1, sensibilita 6/11. Vale per ItemsSize 150%. Serve ''Enhance pointer precision'' attiva per i giochi che la forzano.' },
@@ -379,9 +382,8 @@ function Get-InstalledIds {
 }
 function Get-Preset([string]$name) {
     switch ($name) {
-        'recommended' {
-            return @($Packages | Where-Object { $_.preset -eq 'mine' -or $_.preset -eq 'extra' } | Select-Object -ExpandProperty id)
-        }
+        'recommended' { return @($Packages | Where-Object { $_.ez -eq '1' } | Select-Object -ExpandProperty id) }
+        'ez'          { return @($Packages | Where-Object { $_.ez -eq '1' } | Select-Object -ExpandProperty id) }
         'mine'  { return @($Packages | Where-Object { $_.preset -eq 'mine' } | Select-Object -ExpandProperty id) }
         'extra' { return @($Packages | Where-Object { $_.preset -eq 'extra' } | Select-Object -ExpandProperty id) }
         'mouse' {
@@ -693,7 +695,7 @@ $lblCats = New-Label 'CATEGORIE' $col.mut 22 $fontSmall
 $lblCats.Dock = 'Top'
 
 $railFoot = [System.Windows.Forms.Panel]::new()
-$railFoot.Dock = 'Bottom'; $railFoot.Height = 168; $railFoot.BackColor = $col.bg2
+$railFoot.Dock = 'Bottom'; $railFoot.Height = 182; $railFoot.BackColor = $col.bg2
 
 $footFlow = New-Flow 'TopDown'
 $footFlow.Dock = 'Fill'; $footFlow.BackColor = $col.bg2
@@ -703,14 +705,20 @@ $lblQuick.Margin = [System.Windows.Forms.Padding]::new(0, 10, 0, 2)
 $btnRec = New-Btn 'Consigliati' 212 28
 $btnRec.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 
+$mineRow = New-Flow 'LeftToRight'
+$mineRow.Width = 214; $mineRow.Height = 32
+$btnMine = New-Btn 'CHRK.' 100 28
+$btnMine.Margin = [System.Windows.Forms.Padding]::new(0, 1, 6, 1)
+$btnExtra = New-Btn 'Extra' 100 28
+$btnExtra.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+$mineRow.Controls.Add($btnMine)
+$mineRow.Controls.Add($btnExtra)
+
 $mouseRow = New-Flow 'LeftToRight'
-$mouseRow.Width = 214; $mouseRow.Height = 32
-$btnMouseP = New-Btn 'Mouse fix' 100 28
-$btnMouseP.Margin = [System.Windows.Forms.Padding]::new(0, 1, 6, 1)
-$btnNone = New-Btn 'Nessuno' 100 28
-$btnNone.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+$mouseRow.Width = 214; $mouseRow.Height = 30
+$btnMouseP = New-Btn 'Mouse fix' 212 28
+$btnMouseP.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 $mouseRow.Controls.Add($btnMouseP)
-$mouseRow.Controls.Add($btnNone)
 
 $lblScan = New-Label 'scansione in corso...' $col.mut 22 $fontSmall
 $lblScan.Width = 212
@@ -720,17 +728,20 @@ $btnSelf.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 
 $footFlow.Controls.Add($lblQuick)
 $footFlow.Controls.Add($btnRec)
+$footFlow.Controls.Add($mineRow)
 $footFlow.Controls.Add($mouseRow)
 $footFlow.Controls.Add($lblScan)
 $footFlow.Controls.Add($btnSelf)
+$railFoot.Controls.Add($footFlow)
 
 $rail.Controls.Add($lstCats)
 $rail.Controls.Add($lblCats)
 $rail.Controls.Add($railFoot)
 
-$tip.SetToolTip($btnRec, 'Preseleziona le app consigliate (le mie piu gli extra), saltando quelle gia installate.')
+$tip.SetToolTip($btnRec, 'Le app di base, quelle della guida EZ (x.chrk.tk/ez): browser, VLC, 7zip, Steam, Git, editor, utility.')
+$tip.SetToolTip($btnMine, 'La mia lista: quello che avevo installato sul mio PC (export winget).')
+$tip.SetToolTip($btnExtra, 'Le app che ho scelto a mano oltre alla mia lista.')
 $tip.SetToolTip($btnMouseP, 'Mouse fix MarkC: toglie l accelerazione del puntatore. Rileva la tua scala DPI.')
-$tip.SetToolTip($btnNone, 'Deseleziona tutto.')
 $tip.SetToolTip($btnSelf, 'Riscarica l ultima versione dello script da internet.')
 
 # --- lista centrale --------------------------------------------------------
@@ -744,23 +755,22 @@ $flow.WrapContents = $false; $flow.BackColor = $col.bg
 $flow.Padding = [System.Windows.Forms.Padding]::new(8, 6, 8, 6)
 
 $listHead = [System.Windows.Forms.Panel]::new()
-$listHead.Dock = 'Top'; $listHead.Height = 30; $listHead.BackColor = $col.bg
+$listHead.Dock = 'Top'; $listHead.Height = 34; $listHead.BackColor = $col.bg
 
-$lblCatHead = New-Label 'Tutte le app' $col.fg 28 $fontH2
+$lblCatHead = New-Label 'Tutte le app' $col.fg 32 $fontH2
 $lblCatHead.Dock = 'Fill'
 
 $headRight = New-Flow 'RightToLeft'
-$headRight.Dock = 'Right'; $headRight.Width = 330; $headRight.Height = 28
+$headRight.Dock = 'Right'; $headRight.Width = 340; $headRight.Height = 32
 $headRight.BackColor = $col.bg
-$chkSelAll = [System.Windows.Forms.CheckBox]::new()
-$chkSelAll.Text = 'seleziona i visibili'; $chkSelAll.AutoSize = $true; $chkSelAll.ForeColor = $col.mut
-$chkSelAll.Margin = [System.Windows.Forms.Padding]::new(10, 6, 0, 0)
-$lblSelCount = New-Label '0 selezionati' $col.mut 28
+$lblSelCount = New-Label '0 selezionati' $col.mut 32
 $lblSelCount.AutoSize = $true
 $lblSelCount.TextAlign = 'MiddleRight'
-$lblSelCount.Margin = [System.Windows.Forms.Padding]::new(0, 0, 4, 0)
-$headRight.Controls.Add($chkSelAll)
+$lblSelCount.Margin = [System.Windows.Forms.Padding]::new(0, 0, 10, 0)
+$btnClear = New-Btn 'Pulisci selezione' 150 26
+$btnClear.Margin = [System.Windows.Forms.Padding]::new(0, 3, 0, 0)
 $headRight.Controls.Add($lblSelCount)
+$headRight.Controls.Add($btnClear)
 
 $listHead.Controls.Add($lblCatHead)
 $listHead.Controls.Add($headRight)
@@ -860,7 +870,6 @@ $listHost.Controls.Add($panelUpdates)
 $listHost.Controls.Add($listHead)
 
 $tip.SetToolTip($chkUpdOn, 'Crea o rimuove il task di Windows che aggiorna i programmi da solo.')
-$tip.SetToolTip($chkSelAll, 'Spunta tutte le voci visibili in questo momento (ricerca o categoria comprese).')
 
 # --- pannello dettaglio (destra) -------------------------------------------
 $detail = [System.Windows.Forms.Panel]::new()
@@ -878,9 +887,10 @@ $dId.Dock = 'Top'
 $dName = New-Label '' $col.fg 52 $fontH2
 $dName.Dock = 'Top'
 $dLegend = New-Label ("Passa il mouse su una voce per leggerne la descrizione." + "`r`n`r`n" +
-    "Consigliati = le app della mia lista, piu' gli extra scelti a mano." + "`r`n" +
-    'Mouse fix = tweak del puntatore (MarkC).' + "`r`n" +
-    '(gia installato) = verra saltato.') $col.mut 104 $fontSmall
+    'Consigliati = la base della guida EZ (x.chrk.tk/ez).' + "`r`n" +
+    'CHRK. = quello che avevo sul mio PC.' + "`r`n" +
+    'Extra = app scelte a mano oltre alla mia lista.' + "`r`n" +
+    '(gia installato) = verra saltato.') $col.mut 116 $fontSmall
 $dLegend.Dock = 'Bottom'
 
 $detail.Controls.Add($dDesc)
@@ -895,9 +905,13 @@ function Show-Detail($pkg) {
     $dName.Text = [string]$pkg.name
     $dId.Text = [string]$pkg.id
     $dPub.Text = if ($pkg.PSObject.Properties['pub'] -and $pkg.pub) { 'di ' + $pkg.pub } else { '' }
+    $tags = @()
+    if ($pkg.PSObject.Properties['ez'] -and $pkg.ez -eq '1') { $tags += 'consigliata' }
+    if ($pkg.preset -eq 'mine') { $tags += 'CHRK.' }
+    if ($pkg.preset -eq 'extra') { $tags += 'extra' }
+    if ($pkg.kind -eq 'mouse') { $tags += 'mouse fix' }
     $tag = [string]$pkg.cat
-    if ($pkg.kind -eq 'mouse') { $tag = 'Mouse fix  -  ' + $tag }
-    elseif ($pkg.preset -eq 'mine' -or $pkg.preset -eq 'extra') { $tag = $tag + '  -  consigliata' }
+    if ($tags.Count) { $tag = $tag + '  -  ' + ($tags -join ', ') }
     $dTags.Text = $tag
     $dDesc.Text = if ($pkg.PSObject.Properties['desc'] -and $pkg.desc) { [string]$pkg.desc } else { 'Nessuna descrizione disponibile.' }
     if ($pkg.kind -eq 'mouse') { $dDesc.Text = $dDesc.Text + "`r`n`r`n(Scrive le curve SmoothMouseX/Y e le soglie nel registro)" }
@@ -933,7 +947,6 @@ $form.Controls.Add($top)
 $script:Rows  = [System.Collections.Generic.List[object]]::new()
 $script:Heads = [System.Collections.Generic.List[object]]::new()
 $script:ActiveCat = '*'
-$script:SelAllBusy = $false
 
 $script:CatOrder = @()
 foreach ($p in $Packages) { if ($script:CatOrder -notcontains $p.cat) { $script:CatOrder += $p.cat } }
@@ -1019,6 +1032,7 @@ function Update-SelCount {
     $n = 0
     foreach ($r in $script:Rows) { if ($r.cb.Checked) { $n++ } }
     $lblSelCount.Text = ("{0} selezionati" -f $n)
+    $btnClear.Enabled = ($n -gt 0)
 }
 function Apply-Filter {
     $q = $txtSearch.Text.Trim().ToLower()
@@ -1276,7 +1290,7 @@ function Drain-Queue {
                         $applied++
                     }
                 }
-                $lblScan.Text = ("{0} installati | {1} mouse fix attivi" -f $n, $applied)
+                $lblScan.Text = ("{0} installati - {1} mouse fix" -f $n, $applied)
                 Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse gia applicati. ItemsSize rilevato: {3}%." -f (Stamp), $n, $applied, (Get-CurrentScale)) $col.mut
                 if ($Preset -ne 'none') { Apply-Preset $Preset } else { Apply-Filter }
                 $lblStatus.Text = 'Pronto. Seleziona e premi APPLICA SELEZIONATI.'
@@ -1323,18 +1337,15 @@ $lstCats.Add_SelectedIndexChanged({
         Apply-Filter
     } catch { }
 })
-$chkSelAll.Add_CheckedChanged({
-    if ($script:SelAllBusy) { return }
-    $script:SelAllBusy = $true
-    try {
-        $v = [bool]$chkSelAll.Checked
-        foreach ($r in $script:Rows) { if ($r.cb.Visible) { $r.cb.Checked = $v } }
-        $chkSelAll.Checked = $false
-    } finally { $script:SelAllBusy = $false }
+$btnClear.Add_Click({
+    foreach ($r in $script:Rows) { if ($r.cb.Checked) { $r.cb.Checked = $false } }
+    if ($chkOnly.Checked) { $chkOnly.Checked = $false }
+    Apply-Filter
 })
 $btnRec.Add_Click({ Apply-Preset 'recommended' })
+$btnMine.Add_Click({ Apply-Preset 'mine' })
+$btnExtra.Add_Click({ Apply-Preset 'extra' })
 $btnMouseP.Add_Click({ Apply-Preset 'mouse' })
-$btnNone.Add_Click({ Apply-Preset 'none' })
 $btnSelf.Add_Click({
     try {
         if ([System.Windows.Forms.MessageBox]::Show("Scaricare l'ultima versione da`n$script:UpdateUrl`n`ne sostituire questo file?", 'Aggiorna script', 'YesNo') -ne 'Yes') { return }
@@ -1383,7 +1394,7 @@ $flow.Add_Resize({
 })
 
 $form.Add_Shown({
-    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (Ctrl+A non serve: usa la ricerca e 'seleziona i visibili')" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
+    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (i preset sono nel rail: Consigliati / CHRK. / Extra / Mouse fix; 'Pulisci selezione' azzera le spunte)" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
     Refresh-Cron
     Apply-Filter
     if ($Preset -ne 'none') { Apply-Preset $Preset }

@@ -22,7 +22,8 @@
 
     USO
         .\CHRK-Installer.ps1                      # GUI
-        .\CHRK-Installer.ps1 -Preset recommended  # GUI con le app consigliate preselezionate
+        .\CHRK-Installer.ps1 -Preset recommended  # GUI con la base consigliata preselezionata
+        .\CHRK-Installer.ps1 -Preset mine         # GUI con la mia lista
         .\CHRK-Installer.ps1 -Preset mouse        # GUI coi fix mouse consigliati
         .\CHRK-Installer.ps1 -Console             # elenco a console
         .\CHRK-Installer.ps1 -Console -Preset recommended -DryRun
@@ -37,8 +38,8 @@
 [CmdletBinding()]
 param(
     [string[]]$Select,
-    # mine/extra sono alias storici di recommended
-    [ValidateSet('recommended', 'mine', 'extra', 'mouse', 'all', 'none')]
+    # recommended/ez = base della guida EZ | mine = la mia lista | extra = scelte a mano
+    [ValidateSet('recommended', 'ez', 'mine', 'extra', 'mouse', 'all', 'none')]
     [string]$Preset = 'none',
     [switch]$SkipInstalled,
     [switch]$Console,
@@ -157,9 +158,8 @@ function Get-InstalledIds {
 }
 function Get-Preset([string]$name) {
     switch ($name) {
-        'recommended' {
-            return @($Packages | Where-Object { $_.preset -eq 'mine' -or $_.preset -eq 'extra' } | Select-Object -ExpandProperty id)
-        }
+        'recommended' { return @($Packages | Where-Object { $_.ez -eq '1' } | Select-Object -ExpandProperty id) }
+        'ez'          { return @($Packages | Where-Object { $_.ez -eq '1' } | Select-Object -ExpandProperty id) }
         'mine'  { return @($Packages | Where-Object { $_.preset -eq 'mine' } | Select-Object -ExpandProperty id) }
         'extra' { return @($Packages | Where-Object { $_.preset -eq 'extra' } | Select-Object -ExpandProperty id) }
         'mouse' {
@@ -471,7 +471,7 @@ $lblCats = New-Label 'CATEGORIE' $col.mut 22 $fontSmall
 $lblCats.Dock = 'Top'
 
 $railFoot = [System.Windows.Forms.Panel]::new()
-$railFoot.Dock = 'Bottom'; $railFoot.Height = 168; $railFoot.BackColor = $col.bg2
+$railFoot.Dock = 'Bottom'; $railFoot.Height = 182; $railFoot.BackColor = $col.bg2
 
 $footFlow = New-Flow 'TopDown'
 $footFlow.Dock = 'Fill'; $footFlow.BackColor = $col.bg2
@@ -481,14 +481,20 @@ $lblQuick.Margin = [System.Windows.Forms.Padding]::new(0, 10, 0, 2)
 $btnRec = New-Btn 'Consigliati' 212 28
 $btnRec.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 
+$mineRow = New-Flow 'LeftToRight'
+$mineRow.Width = 214; $mineRow.Height = 32
+$btnMine = New-Btn 'CHRK.' 100 28
+$btnMine.Margin = [System.Windows.Forms.Padding]::new(0, 1, 6, 1)
+$btnExtra = New-Btn 'Extra' 100 28
+$btnExtra.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+$mineRow.Controls.Add($btnMine)
+$mineRow.Controls.Add($btnExtra)
+
 $mouseRow = New-Flow 'LeftToRight'
-$mouseRow.Width = 214; $mouseRow.Height = 32
-$btnMouseP = New-Btn 'Mouse fix' 100 28
-$btnMouseP.Margin = [System.Windows.Forms.Padding]::new(0, 1, 6, 1)
-$btnNone = New-Btn 'Nessuno' 100 28
-$btnNone.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
+$mouseRow.Width = 214; $mouseRow.Height = 30
+$btnMouseP = New-Btn 'Mouse fix' 212 28
+$btnMouseP.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 $mouseRow.Controls.Add($btnMouseP)
-$mouseRow.Controls.Add($btnNone)
 
 $lblScan = New-Label 'scansione in corso...' $col.mut 22 $fontSmall
 $lblScan.Width = 212
@@ -498,17 +504,20 @@ $btnSelf.Margin = [System.Windows.Forms.Padding]::new(0, 1, 0, 1)
 
 $footFlow.Controls.Add($lblQuick)
 $footFlow.Controls.Add($btnRec)
+$footFlow.Controls.Add($mineRow)
 $footFlow.Controls.Add($mouseRow)
 $footFlow.Controls.Add($lblScan)
 $footFlow.Controls.Add($btnSelf)
+$railFoot.Controls.Add($footFlow)
 
 $rail.Controls.Add($lstCats)
 $rail.Controls.Add($lblCats)
 $rail.Controls.Add($railFoot)
 
-$tip.SetToolTip($btnRec, 'Preseleziona le app consigliate (le mie piu gli extra), saltando quelle gia installate.')
+$tip.SetToolTip($btnRec, 'Le app di base, quelle della guida EZ (x.chrk.tk/ez): browser, VLC, 7zip, Steam, Git, editor, utility.')
+$tip.SetToolTip($btnMine, 'La mia lista: quello che avevo installato sul mio PC (export winget).')
+$tip.SetToolTip($btnExtra, 'Le app che ho scelto a mano oltre alla mia lista.')
 $tip.SetToolTip($btnMouseP, 'Mouse fix MarkC: toglie l accelerazione del puntatore. Rileva la tua scala DPI.')
-$tip.SetToolTip($btnNone, 'Deseleziona tutto.')
 $tip.SetToolTip($btnSelf, 'Riscarica l ultima versione dello script da internet.')
 
 # --- lista centrale --------------------------------------------------------
@@ -522,23 +531,22 @@ $flow.WrapContents = $false; $flow.BackColor = $col.bg
 $flow.Padding = [System.Windows.Forms.Padding]::new(8, 6, 8, 6)
 
 $listHead = [System.Windows.Forms.Panel]::new()
-$listHead.Dock = 'Top'; $listHead.Height = 30; $listHead.BackColor = $col.bg
+$listHead.Dock = 'Top'; $listHead.Height = 34; $listHead.BackColor = $col.bg
 
-$lblCatHead = New-Label 'Tutte le app' $col.fg 28 $fontH2
+$lblCatHead = New-Label 'Tutte le app' $col.fg 32 $fontH2
 $lblCatHead.Dock = 'Fill'
 
 $headRight = New-Flow 'RightToLeft'
-$headRight.Dock = 'Right'; $headRight.Width = 330; $headRight.Height = 28
+$headRight.Dock = 'Right'; $headRight.Width = 340; $headRight.Height = 32
 $headRight.BackColor = $col.bg
-$chkSelAll = [System.Windows.Forms.CheckBox]::new()
-$chkSelAll.Text = 'seleziona i visibili'; $chkSelAll.AutoSize = $true; $chkSelAll.ForeColor = $col.mut
-$chkSelAll.Margin = [System.Windows.Forms.Padding]::new(10, 6, 0, 0)
-$lblSelCount = New-Label '0 selezionati' $col.mut 28
+$lblSelCount = New-Label '0 selezionati' $col.mut 32
 $lblSelCount.AutoSize = $true
 $lblSelCount.TextAlign = 'MiddleRight'
-$lblSelCount.Margin = [System.Windows.Forms.Padding]::new(0, 0, 4, 0)
-$headRight.Controls.Add($chkSelAll)
+$lblSelCount.Margin = [System.Windows.Forms.Padding]::new(0, 0, 10, 0)
+$btnClear = New-Btn 'Pulisci selezione' 150 26
+$btnClear.Margin = [System.Windows.Forms.Padding]::new(0, 3, 0, 0)
 $headRight.Controls.Add($lblSelCount)
+$headRight.Controls.Add($btnClear)
 
 $listHead.Controls.Add($lblCatHead)
 $listHead.Controls.Add($headRight)
@@ -638,7 +646,6 @@ $listHost.Controls.Add($panelUpdates)
 $listHost.Controls.Add($listHead)
 
 $tip.SetToolTip($chkUpdOn, 'Crea o rimuove il task di Windows che aggiorna i programmi da solo.')
-$tip.SetToolTip($chkSelAll, 'Spunta tutte le voci visibili in questo momento (ricerca o categoria comprese).')
 
 # --- pannello dettaglio (destra) -------------------------------------------
 $detail = [System.Windows.Forms.Panel]::new()
@@ -656,9 +663,10 @@ $dId.Dock = 'Top'
 $dName = New-Label '' $col.fg 52 $fontH2
 $dName.Dock = 'Top'
 $dLegend = New-Label ("Passa il mouse su una voce per leggerne la descrizione." + "`r`n`r`n" +
-    "Consigliati = le app della mia lista, piu' gli extra scelti a mano." + "`r`n" +
-    'Mouse fix = tweak del puntatore (MarkC).' + "`r`n" +
-    '(gia installato) = verra saltato.') $col.mut 104 $fontSmall
+    'Consigliati = la base della guida EZ (x.chrk.tk/ez).' + "`r`n" +
+    'CHRK. = quello che avevo sul mio PC.' + "`r`n" +
+    'Extra = app scelte a mano oltre alla mia lista.' + "`r`n" +
+    '(gia installato) = verra saltato.') $col.mut 116 $fontSmall
 $dLegend.Dock = 'Bottom'
 
 $detail.Controls.Add($dDesc)
@@ -673,9 +681,13 @@ function Show-Detail($pkg) {
     $dName.Text = [string]$pkg.name
     $dId.Text = [string]$pkg.id
     $dPub.Text = if ($pkg.PSObject.Properties['pub'] -and $pkg.pub) { 'di ' + $pkg.pub } else { '' }
+    $tags = @()
+    if ($pkg.PSObject.Properties['ez'] -and $pkg.ez -eq '1') { $tags += 'consigliata' }
+    if ($pkg.preset -eq 'mine') { $tags += 'CHRK.' }
+    if ($pkg.preset -eq 'extra') { $tags += 'extra' }
+    if ($pkg.kind -eq 'mouse') { $tags += 'mouse fix' }
     $tag = [string]$pkg.cat
-    if ($pkg.kind -eq 'mouse') { $tag = 'Mouse fix  -  ' + $tag }
-    elseif ($pkg.preset -eq 'mine' -or $pkg.preset -eq 'extra') { $tag = $tag + '  -  consigliata' }
+    if ($tags.Count) { $tag = $tag + '  -  ' + ($tags -join ', ') }
     $dTags.Text = $tag
     $dDesc.Text = if ($pkg.PSObject.Properties['desc'] -and $pkg.desc) { [string]$pkg.desc } else { 'Nessuna descrizione disponibile.' }
     if ($pkg.kind -eq 'mouse') { $dDesc.Text = $dDesc.Text + "`r`n`r`n(Scrive le curve SmoothMouseX/Y e le soglie nel registro)" }
@@ -711,7 +723,6 @@ $form.Controls.Add($top)
 $script:Rows  = [System.Collections.Generic.List[object]]::new()
 $script:Heads = [System.Collections.Generic.List[object]]::new()
 $script:ActiveCat = '*'
-$script:SelAllBusy = $false
 
 $script:CatOrder = @()
 foreach ($p in $Packages) { if ($script:CatOrder -notcontains $p.cat) { $script:CatOrder += $p.cat } }
@@ -797,6 +808,7 @@ function Update-SelCount {
     $n = 0
     foreach ($r in $script:Rows) { if ($r.cb.Checked) { $n++ } }
     $lblSelCount.Text = ("{0} selezionati" -f $n)
+    $btnClear.Enabled = ($n -gt 0)
 }
 function Apply-Filter {
     $q = $txtSearch.Text.Trim().ToLower()
@@ -1054,7 +1066,7 @@ function Drain-Queue {
                         $applied++
                     }
                 }
-                $lblScan.Text = ("{0} installati | {1} mouse fix attivi" -f $n, $applied)
+                $lblScan.Text = ("{0} installati - {1} mouse fix" -f $n, $applied)
                 Write-Log ("[{0}] Scansione: {1} pacchetti installati, {2} fix mouse gia applicati. ItemsSize rilevato: {3}%." -f (Stamp), $n, $applied, (Get-CurrentScale)) $col.mut
                 if ($Preset -ne 'none') { Apply-Preset $Preset } else { Apply-Filter }
                 $lblStatus.Text = 'Pronto. Seleziona e premi APPLICA SELEZIONATI.'
@@ -1101,18 +1113,15 @@ $lstCats.Add_SelectedIndexChanged({
         Apply-Filter
     } catch { }
 })
-$chkSelAll.Add_CheckedChanged({
-    if ($script:SelAllBusy) { return }
-    $script:SelAllBusy = $true
-    try {
-        $v = [bool]$chkSelAll.Checked
-        foreach ($r in $script:Rows) { if ($r.cb.Visible) { $r.cb.Checked = $v } }
-        $chkSelAll.Checked = $false
-    } finally { $script:SelAllBusy = $false }
+$btnClear.Add_Click({
+    foreach ($r in $script:Rows) { if ($r.cb.Checked) { $r.cb.Checked = $false } }
+    if ($chkOnly.Checked) { $chkOnly.Checked = $false }
+    Apply-Filter
 })
 $btnRec.Add_Click({ Apply-Preset 'recommended' })
+$btnMine.Add_Click({ Apply-Preset 'mine' })
+$btnExtra.Add_Click({ Apply-Preset 'extra' })
 $btnMouseP.Add_Click({ Apply-Preset 'mouse' })
-$btnNone.Add_Click({ Apply-Preset 'none' })
 $btnSelf.Add_Click({
     try {
         if ([System.Windows.Forms.MessageBox]::Show("Scaricare l'ultima versione da`n$script:UpdateUrl`n`ne sostituire questo file?", 'Aggiorna script', 'YesNo') -ne 'Yes') { return }
@@ -1161,7 +1170,7 @@ $flow.Add_Resize({
 })
 
 $form.Add_Shown({
-    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (Ctrl+A non serve: usa la ricerca e 'seleziona i visibili')" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
+    Write-Log ("[{0}] CHRK Installer v{1} - scala DPI rilevata: {2}%   |   (i preset sono nel rail: Consigliati / CHRK. / Extra / Mouse fix; 'Pulisci selezione' azzera le spunte)" -f (Stamp), $script:Version, (Get-CurrentScale)) $col.mut
     Refresh-Cron
     Apply-Filter
     if ($Preset -ne 'none') { Apply-Preset $Preset }

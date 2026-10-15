@@ -21,8 +21,9 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 |---|---|---|
 | `build/chrk-installer.template.ps1` | sorgente dello script distribuito | contiene i placeholder |
 | `build/build.ps1` | compilatore | unisce dati + template |
-| `build/catalog-mine.json` | export `winget export` dell'autore | concorre al preset `Consigliati` |
-| `build/extras.json` | array di id winget | concorre al preset `Consigliati` |
+| `build/catalog-mine.json` | export `winget export` dell'autore | preset `CHRK.` (`preset = 'mine'`) |
+| `build/ez.json` | array di id winget | app di base `Consigliati` (`-Preset recommended`), dalla guida `x.chrk.tk/ez` |
+| `build/extras.json` | array di id winget | preset `Extra` (`preset = 'extra'`) |
 | `build/names.json` | mappa `id minuscolo → {name, desc}` | usata quando winstall/WinUtil non hanno il pacchetto |
 | `build/mousefixes.inc` | righe letterali dei fix mouse | generato da MarkC, vedi `docs/mousefixes.md` |
 | `build/assets/logo.png` | logo | embeddato in base64 nel build |
@@ -71,8 +72,8 @@ Sezione `# ==== GUI ====` di `chrk-installer.template.ps1`. Dall'esterno verso l
 | Pezzo | Contenuto |
 |---|---|
 | `$top` (Dock=Top) | logo, titolo, ricerca, `reinstalla se presente`, `solo selezionati`, `APPLICA SELEZIONATI`, `Aggiorna tutto`, versione cliccabile |
-| `$rail` (Dock=Left) | `$lstCats`: `ListBox` owner-draw con *Aggiornamenti automatici* (voce 0), *Tutte le app* (voce 1) e le categorie; sotto, `SELEZIONE RAPIDA` (Consigliati / Mouse fix / Nessuno / Aggiorna script) e il conteggio della scansione |
-| `$listHost` (Dock=Fill) | `$listHead` (titolo sezione + `seleziona i visibili` + `n selezionati`), `$flow` (le voci con l'intestazione di ogni categoria) e `$panelUpdates` (la sezione "Aggiornamenti automatici") |
+| `$rail` (Dock=Left) | `$lstCats`: `ListBox` owner-draw con *Aggiornamenti automatici* (voce 0), *Tutte le app* (voce 1) e le categorie; sotto, `SELEZIONE RAPIDA` (Consigliati / CHRK. / Extra / Mouse fix / Aggiorna script) e il conteggio della scansione |
+| `$listHost` (Dock=Fill) | `$listHead` (titolo sezione, `n selezionati`, `Pulisci selezione`), `$flow` (le voci con l'intestazione di ogni categoria) e `$panelUpdates` (la sezione "Aggiornamenti automatici") |
 | `$detail` (Dock=Right) | descrizione della voce sotto il mouse: nome, id, publisher, categoria, `consigliata` |
 | `$bottom` (Dock=Bottom) | `$progress` (visibile solo durante un lavoro), `$lblStatus`, `$log` (RichTextBox) |
 
@@ -110,7 +111,13 @@ La sezione "Aggiornamenti automatici" **non** passa da `APPLICA SELEZIONATI`: ha
    sia l'elenco delle voci sia l'ordine nel rail della GUI.
 3. Ricompila e controlla che il conteggio abbia senso.
 
-### Aggiungere un pacchetto alle app consigliate
+### Aggiungere un'app alle consigliate (base)
+
+Aggiungi l'id winget in `build/ez.json`: e' un array di id, una riga ciascuno, ed e' anche
+l'elenco della guida `x.chrk.tk/ez`. Un'app puo' stare sia qui sia nella lista dell'autore:
+`ez` e' un flag in piu' (`ez = '1'`), non un preset alternativo.
+
+### Aggiungere un pacchetto al preset Extra
 
 Aggiungi l'id winget in `build/extras.json`. Se winstall/WinUtil non lo conoscono, aggiungi
 nome e descrizione in `build/names.json`.

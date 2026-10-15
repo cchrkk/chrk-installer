@@ -6,14 +6,15 @@
         dati                       build                        artefatto
 ┌────────────────────┐      ┌──────────────────┐      ┌────────────────────────┐
 │ catalog-mine.json  │      │                  │      │                        │
-│ extras.json        │─────▶│   build.ps1      │─────▶│  dist/CHRK-Installer.ps1│
-│ names.json         │      │   (+ rete)       │      │  (autocontenuto, GUI)  │
-│ mousefixes.inc     │      │                  │      └────────────────────────┘
-│ assets/logo.png    │      │ ninite.template  │                  │
-└────────────────────┘      └──────────────────┘                  ▼
-                                                                  su GitHub,
-        winstall.app/express ─┐                                   servito via
-        WinUtil catalog      ─┘  (nomi + descrizioni)             Cloudflare s.chrk.tk
+│ ez.json            │─────▶│   build.ps1      │─────▶│  dist/CHRK-Installer.ps1│
+│ extras.json        │      │   (+ rete)       │      │  (autocontenuto, GUI)  │
+│ names.json         │      │                  │      └────────────────────────┘
+│ mousefixes.inc     │      │ chrk-installer   │                  │
+│ assets/logo.png    │      │ .template.ps1    │                  ▼
+└────────────────────┘      └──────────────────┘                  su GitHub,
+                                                                  servito via
+        winstall.app/express ─┐                                   Cloudflare s.chrk.tk
+        WinUtil catalog      ─┘  (nomi + descrizioni)
 ```
 
 `dist/CHRK-Installer.ps1` non ha dipendenze esterne: catalogo e logo sono **dentro** il file.
@@ -58,16 +59,17 @@ Regole:
 
 ```powershell
 @{ id = 'Git.Git'; name = 'Git'; cat = 'Sviluppo'; desc = '...'; pub = '...'
-   src = 'winget'; preset = 'mine'|'extra'|''; kind = 'pkg' }
+   src = 'winget'; preset = 'mine'|'extra'|''; ez = '1'|''; kind = 'pkg' }
 ```
 
 Per i fix mouse (`kind = 'mouse'`) ci sono invece `scale`, `sens`, `x`, `y`, `speed`,
 `t1`, `t2` e `desc`.
 
-`preset` distingue le app dell'autore (`mine`, da `catalog-mine.json`) dagli extra scelti a
-mano (`extra`, da `extras.json`): la GUI li presenta insieme come un unico preset
-**Consigliati** (`Get-Preset recommended` restituisce l'unione). `kind` decide cosa fare
-quando la voce viene applicata.
+`preset` distingue la lista dell'autore (`mine`, da `catalog-mine.json`) dagli extra scelti a
+mano (`extra`, da `extras.json`); `ez = '1'` marca le app di base consigliate
+(`build/ez.json`, la guida `x.chrk.tk/ez`), che sono un preset a se'
+(`Get-Preset recommended`) e possono coincidere con le altre. `kind` decide cosa fare quando
+la voce viene applicata.
 
 ## Categorie
 

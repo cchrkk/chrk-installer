@@ -3,6 +3,21 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.1.1] - 2026-10-15
+
+### Corretto
+- **Il blocco "SELEZIONE RAPIDA" non si vedeva affatto**: il pannello che lo contiene non
+  veniva mai aggiunto al rail (colpa di un `Controls.Add` mancante). Il primo sintomo era
+  "dov'e' il selettore dei consigliati?".
+
+### Cambiato
+- **`Consigliati` e `CHRK.` sono due preset diversi**: `Consigliati` (`-Preset recommended`,
+  alias `ez`) e' la base della guida `x.chrk.tk/ez` (`build/ez.json`, 16 app: browser, VLC,
+  7zip, Steam, Git, editor, utility), `CHRK.` resta la lista dell'autore e `Extra` le scelte
+  a mano. `ez` e' un flag in piu' sulla voce, quindi un'app puo' stare in piu' preset.
+- Al posto di "seleziona i visibili" (inutile) l'intestazione della lista ha
+  **`Pulisci selezione`**, attivo solo quando c'e' qualcosa da pulire.
+
 ## [1.1.0] - 2026-10-15
 
 ### Cambiato
@@ -10,11 +25,10 @@ la versione vive nel file `VERSION`.
   `dist/CHRK-Installer.ps1`, cartella `%LOCALAPPDATA%\CHRK-Installer\`, task pianificato
   `CHRK-Installer Update` e log `chrk-update.log`.
 - **GUI rifatta**: rail delle categorie a sinistra, lista con l'intestazione di ogni
-  categoria (prima le `GroupBox` si rompevano e le sezioni non si vedevano), ricerca,
-  "seleziona i visibili" e conteggio dei selezionati.
-- **Prefissi `[CHRK.]` e `[extra]` rimossi** dai nomi: sono entrambi parte dell'unico preset
-  `Consigliati` (`-Preset recommended`; `mine` ed `extra` restano alias), e la voce
-  "consigliata" si legge nel pannello di destra.
+  categoria (prima le `GroupBox` si rompevano e le sezioni non si vedevano), ricerca e
+  conteggio dei selezionati.
+- **Prefissi `[CHRK.]` e `[extra]` rimossi** dai nomi delle app: l'appartenenza a un preset
+  si legge nel pannello di destra.
 - L'**aggiornamento automatico** non e' piu' una finestra: e' una sezione *dentro la lista*
   ("Aggiornamenti automatici" nel rail) con frequenza, orario, stato, prossima esecuzione e
   log, con `Salva impostazioni` / `Esegui adesso` / `Ricarica stato`.

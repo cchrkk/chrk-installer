@@ -70,6 +70,10 @@ $mine = $mine | Sort-Object id -Unique
 $extrasFile = Join-Path $buildDir 'extras.json'
 $extras = if (Test-Path $extrasFile) { @(Get-Content $extrasFile -Raw | ConvertFrom-Json) } else { @() }
 
+# ---- 2b) consigliate: la base della guida "format EZ" (x.chrk.tk/ez) ------
+$ezFile = Join-Path $buildDir 'ez.json'
+$ez = if (Test-Path $ezFile) { @(Get-Content $ezFile -Raw | ConvertFrom-Json) } else { @() }
+
 # ---- 3) winstall (selezione curata + descrizioni) -------------------------
 $win = @{}
 try {
@@ -143,11 +147,19 @@ function Add-Entry([string]$id, [string]$preset, [string]$src) {
         if (-not $prev.pub -and $pub) { $prev.pub = $pub }
         return
     }
-    $all[$key] = [pscustomobject]@{ id = $id; name = $name; cat = (Get-Cat $id); desc = $desc; pub = $pub; src = $src; preset = $preset }
+    $all[$key] = [pscustomobject]@{ id = $id; name = $name; cat = (Get-Cat $id); desc = $desc; pub = $pub; src = $src; preset = $preset; ez = '' }
 }
 foreach ($m in $mine)   { Add-Entry $m.id $(if ($extras -contains $m.id) { 'extra' } else { 'mine' }) $m.src }
 foreach ($e in $extras) { Add-Entry $e 'extra' 'winget' }
+foreach ($e in $ez)     { Add-Entry $e '' 'winget' }
 foreach ($id in $win.Keys) { Add-Entry $id '' 'winget' }
+
+# le voci consigliate sono un flag in piu', non un preset in alternativa:
+# un'app puo' stare sia nella lista dell'autore sia fra le consigliate
+foreach ($e in $ez) {
+    $k = $e.ToLower()
+    if ($all.ContainsKey($k)) { $all[$k].ez = '1' }
+}
 
 # ---- 8) emissione --------------------------------------------------------
 $catOrder = @('Browser','Comunicazione','Documenti','Sviluppo','Multimedia e foto','Gaming','Cloud e rete','Sicurezza e VPN',
@@ -158,8 +170,8 @@ $rank = @{ 'mine' = 0; 'extra' = 1; '' = 2 }
 $lines = [System.Collections.Generic.List[string]]::new()
 foreach ($it in ($all.Values | Sort-Object @{e={$catOrder.IndexOf($_.cat)}}, @{e={$rank[$_.preset]}}, name)) {
     $n = $it.name.Replace("'", "''"); $d = $it.desc.Replace("'", "''"); $p = $it.pub.Replace("'", "''")
-    $lines.Add(("    @{{ id = '{0}'; name = '{1}'; cat = '{2}'; desc = '{3}'; pub = '{4}'; src = '{5}'; preset = '{6}'; kind = 'pkg' }}" -f `
-        $it.id, $n, $it.cat, $d, $p, $it.src, $it.preset))
+    $lines.Add(("    @{{ id = '{0}'; name = '{1}'; cat = '{2}'; desc = '{3}'; pub = '{4}'; src = '{5}'; preset = '{6}'; ez = '{7}'; kind = 'pkg' }}" -f `
+        $it.id, $n, $it.cat, $d, $p, $it.src, $it.preset, $it.ez))
 }
 $inc = Join-Path $buildDir 'mousefixes.inc'
 if (Test-Path $inc) { $lines.AddRange([string[]](Get-Content $inc)) }
@@ -199,7 +211,8 @@ foreach ($g in ($all.Values | Group-Object cat | Sort-Object { $catOrder.IndexOf
     Write-Host ("  {0,-24} {1}" -f $g.Name, $g.Count)
 }
 Write-Host ""
-Write-Host ("  consigliate: {0} app mie + {1} extra  |  popolari: {2}" -f `
+Write-Host ("  consigliate (base EZ): {0} | mie: {1} | extra: {2} | popolari: {3}" -f `
+    @($all.Values | Where-Object { $_.ez }).Count, `
     @($all.Values | Where-Object preset -eq 'mine').Count, `
     @($all.Values | Where-Object preset -eq 'extra').Count, `
     @($all.Values | Where-Object { -not $_.preset }).Count)
