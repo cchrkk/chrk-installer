@@ -9,6 +9,8 @@ irm https://s.chrk.tk | iex
 
 ![CHRK Installer](build/assets/logo.png)
 
+![La GUI](docs/gui.png)
+
 ## Cosa fa
 
 - **Rail delle categorie a sinistra** (Browser, Documenti, Sviluppo, Mouse, ...) e lista a
