@@ -64,7 +64,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.4.5'
+$script:Version   = '1.4.6'
 $script:BuildDate = '15/10/2026'
 $script:UpdateUrl = 'https://ez.chrk.tk'
 

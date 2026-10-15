@@ -3,6 +3,13 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.6] - 2026-10-15
+
+### Cambiato
+- Guida: sfondo **AMOLED** (`#000`, card `#0b0b0d`, tema scuro di default), **logo centrato**,
+  e le due immagini che caratterizzano la guida (`docs/assets/ez-top.png` in cima e
+  `ez-bottom.png` in fondo: 754x323 e 359x694, le stesse di Trilium).
+
 ## [1.4.5] - 2026-10-15
 
 ### Cambiato
