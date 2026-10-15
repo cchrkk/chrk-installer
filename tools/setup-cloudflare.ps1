@@ -54,10 +54,10 @@ $ruleDesc = "chrk-installer -> GitHub raw"
 $phase = 'http_request_dynamic_redirect'
 
 if ($Remove) {
-    # rimuovi la regola
+    # rimuovi le regole di questo host
     try {
         $rs = Invoke-CF GET "/zones/$zid/rulesets/phases/$phase/entrypoint"
-        $keep = @($rs.result.rules | Where-Object { $_.description -ne $ruleDesc })
+        $keep = @($rs.result.rules | Where-Object { $_.description -ne $ruleDesc -and ([string]$_.expression) -notlike "*$fqdn*" })
         Invoke-CF PUT "/zones/$zid/rulesets/phases/$phase/entrypoint" @{ rules = $keep } | Out-Null
         Write-Host "Regola di redirect rimossa." -ForegroundColor Yellow
     } catch { Write-Host "Nessuna regola da rimuovere." -ForegroundColor DarkGray }
@@ -99,10 +99,13 @@ try {
     $existing = @((Invoke-CF GET "/zones/$zid/rulesets/phases/$phase/entrypoint").result.rules |
         Where-Object { $_ -and $_.action -and $_.expression })
 } catch { $existing = @() }
-# rimanda solo i campi scrivibili (l'API rifiuta quelli read-only)
+# rimanda solo i campi scrivibili (l'API rifiuta quelli read-only).
+# Scarta sia la regola con la nostra descrizione sia qualunque residuo che punti a questo
+# hostname: due regole sullo stesso host si annullano a vicenda (vince la prima).
 $keep = @()
 foreach ($r in $existing) {
     if ($r.description -eq $ruleDesc) { continue }
+    if (([string]$r.expression) -like "*$fqdn*") { continue }
     $o = [ordered]@{}
     foreach ($k in @('action', 'description', 'enabled', 'expression', 'action_parameters', 'ref')) {
         if ($r.PSObject.Properties[$k]) { $o[$k] = $r.$k }
