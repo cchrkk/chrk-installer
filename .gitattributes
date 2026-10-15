@@ -1,0 +1,6 @@
+# Normalizza i fine riga: LF in repo (PowerShell 5.1 li legge senza problemi)
+* text=auto eol=lf
+
+# binari
+*.png binary
+*.svg text
