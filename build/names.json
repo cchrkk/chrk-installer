@@ -52,5 +52,12 @@
   "nvidia.physx": { "name": "NVIDIA PhysX", "desc": "Motore fisico usato da molti giochi." },
   "oracle.jdk.17": { "name": "Java JDK 17", "desc": "Kit di sviluppo Java 17 (Oracle)." },
   "oracle.jdk.21": { "name": "Java JDK 21", "desc": "Kit di sviluppo Java 21 (Oracle)." },
-  "oracle.jdk.25": { "name": "Java JDK 25", "desc": "Kit di sviluppo Java 25 (Oracle)." }
+  "oracle.jdk.25": { "name": "Java JDK 25", "desc": "Kit di sviluppo Java 25 (Oracle)." },
+
+  "oo-software.shutup10": { "name": "O&O ShutUp10++", "desc": "Privacy e telemetria di Windows in due click, con profilo esportabile da riusare." },
+  "logitech.ghub": { "name": "Logitech G HUB", "desc": "Software per mouse, tastiere e cuffie Logitech G." },
+  "razerinc.razerinstaller.synapse4": { "name": "Razer Synapse 4", "desc": "Software per periferiche Razer (tastiere, mouse, RGB)." },
+  "corsair.icue.5": { "name": "Corsair iCUE 5", "desc": "Software per periferiche Corsair (tastiere, mouse, RGB)." },
+  "steelseries.gg": { "name": "SteelSeries GG", "desc": "Software per periferiche SteelSeries: engine, Sonar e capture." },
+  "hasleo.backupsuitefree": { "name": "Hasleo Backup Suite Free", "desc": "Backup e imaging del disco: cosi il prossimo format e una passeggiata." }
 }

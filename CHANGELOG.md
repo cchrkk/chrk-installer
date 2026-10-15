@@ -3,6 +3,18 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.1.3] - 2026-10-15
+
+### Aggiunto
+- `build/exclude.json`: id da tenere fuori dal catalogo (primo uso: **Splashtop Business**
+  rimosso).
+- `build/guide.json`: le altre app consigliate dalla guida EZ, presenti nel catalogo ma fuori
+  dal preset base - **O&O ShutUp10++**, **Logitech G HUB**, **Razer Synapse 4**,
+  **Corsair iCUE 5**, **SteelSeries GG**, **Hasleo Backup Suite Free** (con nome,
+  descrizione e categoria vere: la guida le cita senza id winget).
+- `Consigliati` passa a 17 app: aggiunto **O&O ShutUp10++** (sezione 9 della guida).
+- Nel pannello di destra la voce "dalla guida EZ" per le app di `guide.json`.
+
 ## [1.1.2] - 2026-10-15
 
 ### Corretto

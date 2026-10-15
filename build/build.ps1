@@ -74,6 +74,16 @@ $extras = if (Test-Path $extrasFile) { @(Get-Content $extrasFile -Raw | ConvertF
 $ezFile = Join-Path $buildDir 'ez.json'
 $ez = if (Test-Path $ezFile) { @(Get-Content $ezFile -Raw | ConvertFrom-Json) } else { @() }
 
+# ---- 2c) altre app della guida EZ (selezionabili, non nella base) ---------
+$guideFile = Join-Path $buildDir 'guide.json'
+$guide = if (Test-Path $guideFile) { @(Get-Content $guideFile -Raw | ConvertFrom-Json) } else { @() }
+
+# ---- 2d) esclusioni: id che non devono comparire nel catalogo -------------
+$excludeFile = Join-Path $buildDir 'exclude.json'
+$exclude = if (Test-Path $excludeFile) { @(Get-Content $excludeFile -Raw | ConvertFrom-Json) } else { @() }
+$excludeSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+foreach ($x in $exclude) { [void]$excludeSet.Add($x) }
+
 # ---- 3) winstall (selezione curata + descrizioni) -------------------------
 $win = @{}
 try {
@@ -121,8 +131,8 @@ function Get-Cat([string]$id) {
         '^(VideoLAN|Daum|HandBrake|Gyan\.FFmpeg|yt-dlp|OBSProject|shinchiro|mpv|ShareX|Greenshot|TenacityTeam|Audacity|GIMP|dotPDN|KDE|Krita|BlenderFoundation|Blender|Canva|ImageGlass|IrfanSkiljan|IrfanView|FastStone|XnSoft|EarTrumpet|K-Lite|CodecGuide|mpc-qt|AIMP|foobar|jeffvli|VictorAlves|Spotify|Apple\.iTunes|iTunes|AdrienAllard|OpenShot|Shotcut|nomacs|jpegview|Upscayl|Stremio|Inkscape|ByteDance|Google\.EarthPro)(?:\.|$)' { return 'Multimedia e foto' }
         '^(Microsoft\.VisualStudioCode|Microsoft\.VisualStudio|Microsoft\.WindowsTerminal|Microsoft\.PowerShell|Git|GitHub|GitExtensions|Kitware|OpenJS|GoLang|Python|Rustlang|DenoLand|astral-sh|EclipseAdoptium|Oracle|Amazon\.Corretto|Google\.AndroidStudio|Google\.PlatformTools|ArduinoSA|StrawberryPerl|Ninja-build|SST\.opencode|Anthropic|Ollama|JetBrains|Postman|Bruno|Docker|Zed|Neovim|Lazygit|Starship|JanDeDobbeleer|pnpm|PNPM|Yarn|CoreyButler|SystemInformer|SublimeText|Unity|Vagrant|Hashicorp|Qt|LLVM|RubyLang|Lua|Anysphere|Notepad\+\+|WinMerge|Ngrok)(?:\.|$)' { return 'Sviluppo' }
         '^(7zip|NanaZip|M2Team|WinRAR|rarlab|PeaZip|Bandizip|Corel\.WinZip|Everything|voidtools|WizTree|AntibodySoftware|WinDirStat|TreeSize|HxD|xeheditor)(?:\.|$)' { return 'File e archivi' }
-        '^(RamenSoftware|StartIsBack|Nilesoft|rcmaehl|tchumakov|OFGB|Microsoft\.PowerToys|PowerToys|AutoHotkey|GlazeWM|glazewm|ProcessLasso|processlasso|StefanSundin|Devolutions|UniGetUI|Klocman|Revo|WiseCleaner|PolicyPlus|policyplus|TranslucentTB|ttaskbar|Winaero|infinitepower18)(?:\.|$)' { return 'Sistema e tweaks' }
-        '^(CPUID|TechPowerUp|HWiNFO|hwmonitor|CrystalDewWorld|Guru3D|MSI|OpenRGB|SignalRGB|nvclean|DisplayDriverUninstaller|Corsair|Razer|Logitech|FanControl|ArgusMonitor|Bambulab|Prusa|Ultimaker|OrcaSlicer|9N1KVPCJP303|XP89DCGQ3K6VLD)(?:\.|$)' { return 'Hardware e monitoraggio' }
+        '^(RamenSoftware|StartIsBack|Nilesoft|rcmaehl|tchumakov|OFGB|Microsoft\.PowerToys|PowerToys|AutoHotkey|GlazeWM|glazewm|ProcessLasso|processlasso|StefanSundin|Devolutions|UniGetUI|Klocman|Revo|WiseCleaner|PolicyPlus|policyplus|TranslucentTB|ttaskbar|Winaero|infinitepower18|OO-Software|Hasleo)(?:\.|$)' { return 'Sistema e tweaks' }
+        '^(CPUID|TechPowerUp|HWiNFO|hwmonitor|CrystalDewWorld|Guru3D|MSI|OpenRGB|SignalRGB|nvclean|DisplayDriverUninstaller|Corsair|Razer|RazerInc|Logitech|SteelSeries|FanControl|ArgusMonitor|Bambulab|Prusa|Ultimaker|OrcaSlicer|9N1KVPCJP303|XP89DCGQ3K6VLD)(?:\.|$)' { return 'Hardware e monitoraggio' }
         '^(Rufus|Ventoy|Balena|Fedora|UNetbootin|Win32DiskImager)(?:\.|$)' { return 'USB e masterizzazione' }
         '^(Microsoft\.VCRedist|Microsoft\.DotNet|Microsoft\.NET|Microsoft\.VCLibs|Microsoft\.WindowsAppRuntime|Microsoft\.UI\.Xaml|Microsoft\.DirectX|Microsoft\.GameInput|Microsoft\.AppInstaller|Microsoft\.Xaml|Nvidia\.PhysX|Microsoft\.WindowsDesktop|Microsoft\.EdgeWebView)(?:\.|$)' { return 'Runtime e librerie' }
     }
@@ -133,6 +143,7 @@ function Get-Cat([string]$id) {
 $all = @{}
 function Add-Entry([string]$id, [string]$preset, [string]$src) {
     if ([string]::IsNullOrWhiteSpace($id)) { return }
+    if ($excludeSet.Contains($id)) { return }
     $key = $id.ToLower()
     $name = $null; $desc = ''; $pub = ''
     if ($win.ContainsKey($id)) { $name = $win[$id].name; $desc = $win[$id].desc; $pub = $win[$id].pub }
@@ -147,18 +158,23 @@ function Add-Entry([string]$id, [string]$preset, [string]$src) {
         if (-not $prev.pub -and $pub) { $prev.pub = $pub }
         return
     }
-    $all[$key] = [pscustomobject]@{ id = $id; name = $name; cat = (Get-Cat $id); desc = $desc; pub = $pub; src = $src; preset = $preset; ez = '' }
+    $all[$key] = [pscustomobject]@{ id = $id; name = $name; cat = (Get-Cat $id); desc = $desc; pub = $pub; src = $src; preset = $preset; ez = ''; guida = '' }
 }
 foreach ($m in $mine)   { Add-Entry $m.id $(if ($extras -contains $m.id) { 'extra' } else { 'mine' }) $m.src }
 foreach ($e in $extras) { Add-Entry $e 'extra' 'winget' }
 foreach ($e in $ez)     { Add-Entry $e '' 'winget' }
+foreach ($e in $guide)  { Add-Entry $e '' 'winget' }
 foreach ($id in $win.Keys) { Add-Entry $id '' 'winget' }
 
-# le voci consigliate sono un flag in piu', non un preset in alternativa:
+# le voci consigliate e quelle "della guida" sono flag in piu', non preset alternativi:
 # un'app puo' stare sia nella lista dell'autore sia fra le consigliate
 foreach ($e in $ez) {
     $k = $e.ToLower()
     if ($all.ContainsKey($k)) { $all[$k].ez = '1' }
+}
+foreach ($e in $guide) {
+    $k = $e.ToLower()
+    if ($all.ContainsKey($k)) { $all[$k].guida = '1' }
 }
 
 # ---- 8) emissione --------------------------------------------------------
@@ -170,8 +186,8 @@ $rank = @{ 'mine' = 0; 'extra' = 1; '' = 2 }
 $lines = [System.Collections.Generic.List[string]]::new()
 foreach ($it in ($all.Values | Sort-Object @{e={$catOrder.IndexOf($_.cat)}}, @{e={$rank[$_.preset]}}, name)) {
     $n = $it.name.Replace("'", "''"); $d = $it.desc.Replace("'", "''"); $p = $it.pub.Replace("'", "''")
-    $lines.Add(("    @{{ id = '{0}'; name = '{1}'; cat = '{2}'; desc = '{3}'; pub = '{4}'; src = '{5}'; preset = '{6}'; ez = '{7}'; kind = 'pkg' }}" -f `
-        $it.id, $n, $it.cat, $d, $p, $it.src, $it.preset, $it.ez))
+    $lines.Add(("    @{{ id = '{0}'; name = '{1}'; cat = '{2}'; desc = '{3}'; pub = '{4}'; src = '{5}'; preset = '{6}'; ez = '{7}'; guida = '{8}'; kind = 'pkg' }}" -f `
+        $it.id, $n, $it.cat, $d, $p, $it.src, $it.preset, $it.ez, $it.guida))
 }
 $inc = Join-Path $buildDir 'mousefixes.inc'
 if (Test-Path $inc) { $lines.AddRange([string[]](Get-Content $inc)) }
@@ -216,7 +232,7 @@ Write-Host ("  consigliate (base EZ): {0} | mie: {1} | extra: {2} | popolari: {3
     @($all.Values | Where-Object preset -eq 'mine').Count, `
     @($all.Values | Where-Object preset -eq 'extra').Count, `
     @($all.Values | Where-Object { -not $_.preset }).Count)
-Write-Host ("  con descrizione: {0}/{1}" -f @($all.Values | Where-Object { $_.desc }).Count, $all.Count)
+Write-Host ("  con descrizione: {0}/{1}   |   escluse: {2}" -f @($all.Values | Where-Object { $_.desc }).Count, $all.Count, $excludeSet.Count)
 if ($win.Count -eq 0) { Write-Warning "winstall non ha risposto: il catalogo e' incompleto, NON pubblicare questo build." }
 $altro = @($all.Values | Where-Object { $_.cat -eq 'Altre app' })
 if ($altro.Count) { Write-Warning ("voci non classificate ({0}): {1}" -f $altro.Count, (($altro | Select-Object -ExpandProperty id) -join ', ')) }

@@ -23,6 +23,8 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 | `build/build.ps1` | compilatore | unisce dati + template |
 | `build/catalog-mine.json` | export `winget export` dell'autore | preset `CHRK.` (`preset = 'mine'`) |
 | `build/ez.json` | array di id winget | app di base `Consigliati` (`-Preset recommended`), dalla guida `x.chrk.tk/ez` |
+| `build/guide.json` | array di id winget | le altre app della guida EZ: nel catalogo e selezionabili, ma fuori dal preset |
+| `build/exclude.json` | array di id winget | id da **non** mettere nel catalogo (es. `Splashtop.SplashtopBusiness`) |
 | `build/extras.json` | array di id winget | preset `Extra` (`preset = 'extra'`) |
 | `build/names.json` | mappa `id minuscolo → {name, desc}` | usata quando winstall/WinUtil non hanno il pacchetto |
 | `build/mousefixes.inc` | righe letterali dei fix mouse | generato da MarkC, vedi `docs/mousefixes.md` |
@@ -116,6 +118,11 @@ La sezione "Aggiornamenti automatici" **non** passa da `APPLICA SELEZIONATI`: ha
 Aggiungi l'id winget in `build/ez.json`: e' un array di id, una riga ciascuno, ed e' anche
 l'elenco della guida `x.chrk.tk/ez`. Un'app puo' stare sia qui sia nella lista dell'autore:
 `ez` e' un flag in piu' (`ez = '1'`), non un preset alternativo.
+
+### Togliere un'app dal catalogo
+
+Aggiungi l'id in `build/exclude.json`: resta fuori da tutte le fonti, anche se winstall/WinUtil
+lo conoscono. Il build stampa quante voci ha escluso.
 
 ### Aggiungere un pacchetto al preset Extra
 

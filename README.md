@@ -90,6 +90,8 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 │  ├─ chrk-installer.template.ps1   sorgente dello script, con i placeholder
 │  ├─ catalog-mine.json             export winget dell'autore -> preset "CHRK."
 │  ├─ ez.json                       app di base consigliate (guida x.chrk.tk/ez)
+│  ├─ guide.json                    altre app della guida EZ (selezionabili, non nella base)
+│  ├─ exclude.json                  id da NON mettere nel catalogo
 │  ├─ extras.json                   pacchetti extra (preset "Extra")
 │  ├─ names.json                    nomi/descrizioni manuali di riserva
 │  ├─ mousefixes.inc                fix mouse MarkC gia' estratti

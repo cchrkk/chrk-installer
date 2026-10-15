@@ -677,9 +677,10 @@ $dName = New-Label '' $col.fg 52 $fontH2
 $dName.Dock = 'Top'
 $dLegend = New-Label ("Passa il mouse su una voce per leggerne la descrizione." + "`r`n`r`n" +
     'Consigliati = la base della guida EZ (x.chrk.tk/ez).' + "`r`n" +
+    'dalla guida EZ = le altre app che consiglia la guida.' + "`r`n" +
     'CHRK. = quello che avevo sul mio PC.' + "`r`n" +
     'Extra = app scelte a mano oltre alla mia lista.' + "`r`n" +
-    '(gia installato) = verra saltato.') $col.mut 116 $fontSmall
+    '(gia installato) = verra saltato.') $col.mut 128 $fontSmall
 $dLegend.Dock = 'Bottom'
 
 $detail.Controls.Add($dDesc)
@@ -696,6 +697,7 @@ function Show-Detail($pkg) {
     $dPub.Text = if ($pkg.PSObject.Properties['pub'] -and $pkg.pub) { 'di ' + $pkg.pub } else { '' }
     $tags = @()
     if ($pkg.PSObject.Properties['ez'] -and $pkg.ez -eq '1') { $tags += 'consigliata' }
+    elseif ($pkg.PSObject.Properties['guida'] -and $pkg.guida -eq '1') { $tags += 'dalla guida EZ' }
     if ($pkg.preset -eq 'mine') { $tags += 'CHRK.' }
     if ($pkg.preset -eq 'extra') { $tags += 'extra' }
     if ($pkg.kind -eq 'mouse') { $tags += 'mouse fix' }
