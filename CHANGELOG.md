@@ -3,6 +3,16 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.1.2] - 2026-10-15
+
+### Corretto
+- **`irm s.chrk.tk | iex` su un Windows appena installato**: la copia locale veniva lanciata
+  con `& file.ps1` e con l'ExecutionPolicy di default (`Restricted`) PowerShell rifiutava di
+  eseguirla, lasciando l'utente con un errore dopo il download. Ora l'installer alza la
+  policy **solo per il proprio processo** (`Set-ExecutionPolicy -Scope Process Bypass`, non
+  richiede admin) e, se a bloccare e' una policy di gruppo, esegue la copia locale in memoria
+  dicendo chiaramente che cronjob e auto-aggiornamento restano spenti.
+
 ## [1.1.1] - 2026-10-15
 
 ### Corretto

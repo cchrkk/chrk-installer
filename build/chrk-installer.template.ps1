@@ -80,8 +80,21 @@ if (-not $PSCommandPath -and -not $NoSelfInstall) {
     if ($ok) {
         $fwd = @{}
         foreach ($k in $PSBoundParameters.Keys) { if ($k -ne 'NoSelfInstall') { $fwd[$k] = $PSBoundParameters[$k] } }
-        Write-Host "Avvio dalla copia locale (da qui in poi hai un solo file su disco)..." -ForegroundColor Green
-        & $dst @fwd
+        # Su un Windows appena installato l'ExecutionPolicy e' Restricted: un .ps1 su disco non
+        # parte (mentre irm | iex funziona, perche' non e' un file). Il Bypass vale solo per
+        # questo processo e non richiede admin. Se una policy di gruppo lo impedisce si esegue
+        # il contenuto in memoria: la GUI funziona, cronjob e auto-update no (vogliono un file).
+        try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop } catch { }
+        if ((Get-ExecutionPolicy) -eq 'Bypass') {
+            Write-Host "Avvio dalla copia locale (da qui in poi hai un solo file su disco)..." -ForegroundColor Green
+            & $dst @fwd
+        } else {
+            Write-Host "Questo PC blocca l esecuzione degli script: eseguo la copia locale in memoria." -ForegroundColor Yellow
+            Write-Host "Cronjob e auto-aggiornamento restano spenti. Per averli:" -ForegroundColor Yellow
+            Write-Host ("  powershell -ExecutionPolicy Bypass -File `"{0}`"" -f $dst) -ForegroundColor Gray
+            $fwd['NoSelfInstall'] = $true
+            & ([ScriptBlock]::Create([System.IO.File]::ReadAllText($dst))) @fwd
+        }
         return
     }
     Write-Host "Continuo con l'istanza in memoria: la GUI funziona, cronjob/auto-update no." -ForegroundColor Yellow

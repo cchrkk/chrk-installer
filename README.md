@@ -41,8 +41,15 @@ irm https://s.chrk.tk | iex
 
 # scaricando il file
 irm https://s.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
-& "$env:USERPROFILE\CHRK-Installer.ps1"
+powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 ```
+
+> Su un Windows appena installato la **ExecutionPolicy e' `Restricted`**: `irm | iex` funziona
+> lo stesso (non e' un file), e lo script si riavvia dalla copia locale alzando la policy
+> **solo per il suo processo** (`-Scope Process`, nessun admin). Per lanciare il `.ps1`
+> scaricato a mano serve invece `-ExecutionPolicy Bypass`, come nell'esempio sopra.
+> Se e' una policy di gruppo a bloccare gli script, l'installer parte comunque in memoria,
+> ma cronjob e auto-aggiornamento restano spenti.
 
 ## Uso da riga di comando
 
