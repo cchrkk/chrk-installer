@@ -64,7 +64,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.4.1'
+$script:Version   = '1.4.2'
 $script:UpdateUrl = 'https://ez.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
@@ -110,12 +110,12 @@ if (-not $PSCommandPath -and -not $NoSelfInstall) {
 $Packages = @(
     @{ id = 'Microsoft.Edge'; name = 'Microsoft Edge'; cat = 'Browser'; desc = 'Microsoft Edge is a cross-platform web browser built for modern life.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'TheBrowserCompany.Arc'; name = 'Arc'; cat = 'Browser'; desc = 'Arc is a new browser that shapes itself to how you use the internet. It offers Spaces, Profiles, Split View, Themes, and more to organize and customize your online experience.'; pub = 'The Browser Company of New York'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
-    @{ id = 'Brave.Brave'; name = 'Brave'; cat = 'Browser'; desc = 'Secure, Fast & Private Web Browser with Adblocker'; pub = 'Brave Software Inc'; src = 'winget'; preset = ''; ez = '1'; guida = ''; kind = 'pkg' },
-    @{ id = 'Google.Chrome'; name = 'Google Chrome'; cat = 'Browser'; desc = 'The Fast & Secure Web Browser Built to be Yours'; pub = 'Google LLC'; src = 'winget'; preset = ''; ez = '1'; guida = ''; kind = 'pkg' },
-    @{ id = 'Mozilla.Firefox'; name = 'Mozilla Firefox (en-US)'; cat = 'Browser'; desc = 'Mozilla Firefox is free and open source software, built by a community of thousands from all over the world.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = '1'; guida = ''; kind = 'pkg' },
+    @{ id = 'Brave.Brave'; name = 'Brave'; cat = 'Browser'; desc = 'Secure, Fast & Private Web Browser with Adblocker'; pub = 'Brave Software Inc'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
+    @{ id = 'Google.Chrome'; name = 'Google Chrome'; cat = 'Browser'; desc = 'The Fast & Secure Web Browser Built to be Yours'; pub = 'Google LLC'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
+    @{ id = 'Mozilla.Firefox'; name = 'Mozilla Firefox (en-US)'; cat = 'Browser'; desc = 'Mozilla Firefox is free and open source software, built by a community of thousands from all over the world.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'Mozilla.Firefox.ESR'; name = 'Mozilla Firefox ESR (en-US)'; cat = 'Browser'; desc = 'Get the Firefox Extended Support Release or Rapid Release browser for comprehensive data security and data protection.'; pub = 'Mozilla'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'Opera.Opera'; name = 'Opera Stable'; cat = 'Browser'; desc = 'The Opera browser includes everything you need for private, safe, and efficient browsing, along with a variety of unique features to enhance your capabilities online.'; pub = 'Opera Software'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
-    @{ id = 'Vivaldi.Vivaldi'; name = 'Vivaldi'; cat = 'Browser'; desc = 'Powerful, Personal and Private web browser.'; pub = 'Vivaldi Technologies AS.'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
+    @{ id = 'Vivaldi.Vivaldi'; name = 'Vivaldi'; cat = 'Browser'; desc = 'Powerful, Personal and Private web browser.'; pub = 'Vivaldi Technologies AS.'; src = 'winget'; preset = ''; ez = '1'; guida = ''; kind = 'pkg' },
     @{ id = 'Yandex.Browser'; name = 'Yandex Browser'; cat = 'Browser'; desc = 'Yandex Browser delivers fast and secure browsing with built-in Alice and the ability to sync passwords, bookmarks, and bank cards across devices.'; pub = 'Yandex'; src = 'winget'; preset = ''; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'SpikeHD.Dorion'; name = 'Dorion'; cat = 'Comunicazione'; desc = 'Tiny alternative Discord client with a smaller footprint, snappier startup, themes, plugins and more!'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'Microsoft.Teams'; name = 'Microsoft Teams'; cat = 'Comunicazione'; desc = 'Collaborate more effectively with a faster, simpler, smarter, and more flexible Teams.'; pub = 'Microsoft Corporation'; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
@@ -193,8 +193,8 @@ $Packages = @(
     @{ id = 'Canva.Affinity'; name = 'Affinity'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'VictorAlves.Aonsoku'; name = 'Aonsoku'; cat = 'Multimedia e foto'; desc = 'Client desktop per server musicali Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'jeffvli.Feishin'; name = 'Feishin'; cat = 'Multimedia e foto'; desc = 'Player musicale per server Navidrome/Jellyfin/Subsonic.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
-    @{ id = 'yt-dlp.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'Gyan.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
+    @{ id = 'yt-dlp.FFmpeg'; name = 'FFmpeg'; cat = 'Multimedia e foto'; desc = ''; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'HandBrake.HandBrake'; name = 'HandBrake'; cat = 'Multimedia e foto'; desc = 'HandBrake is an open-source video transcoder, allowing you to convert video from nearly any format to a selection of widely supported codecs.'; pub = ''; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'Daum.PotPlayer'; name = 'PotPlayer'; cat = 'Multimedia e foto'; desc = 'Powerful multimedia player that supports a variety of different video codecs and formats.'; pub = 'Kakao Corp.'; src = 'winget'; preset = 'mine'; ez = ''; guida = ''; kind = 'pkg' },
     @{ id = 'ShareX.ShareX'; name = 'ShareX'; cat = 'Multimedia e foto'; desc = 'Screen capture, file sharing and productivity tool'; pub = 'ShareX Team'; src = 'winget'; preset = 'mine'; ez = '1'; guida = ''; kind = 'pkg' },

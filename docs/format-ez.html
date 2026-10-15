@@ -101,7 +101,7 @@
     <div class="cmd big"><code>irm ez.chrk.tk | iex</code><button class="copy" data-copy="irm ez.chrk.tk | iex">Copia</button></div>
     <p class="mut" style="font-size:13.6px;margin:4px 0 0">PowerShell → incolla → Invio. Si apre la GUI con le app consigliate <strong>già spuntate</strong>: premi <em>APPLICA SELEZIONATI</i> e vai a farti un caffè.</p>
     <div class="chips">
-      <span class="chip">17 app di base</span><span class="chip">tweak di Windows</span><span class="chip">fix mouse MarkC</span><span class="chip">MAS + WinUtil</span><span class="chip">aggiornamenti automatici</span>
+      <span class="chip">15 app di base</span><span class="chip">tweak di Windows</span><span class="chip">fix mouse MarkC</span><span class="chip">MAS + WinUtil</span><span class="chip">aggiornamenti automatici</span>
     </div>
   </header>
 
@@ -165,7 +165,7 @@
     <table>
       <thead><tr><th>Nel rail</th><th>Cosa fa</th></tr></thead>
       <tbody>
-        <tr><td><strong>Consigliati</strong> (già spuntati)</td><td>Chrome · Firefox · Brave · VLC · 7zip · Steam · Git · VS Code · Notepad++ · ShareX · Bitwarden · qBittorrent · Ventoy · LocalSend · Syncthing · WizTree · O&amp;O ShutUp10++</td></tr>
+        <tr><td><strong>Consigliati</strong> (già spuntati)</td><td>Vivaldi · VLC · 7zip · Steam · Git · VS Code · Notepad++ · ShareX · Bitwarden · qBittorrent · Ventoy · LocalSend · Syncthing · WizTree · O&amp;O ShutUp10++</td></tr>
         <tr><td><strong>CHRK.</strong> · <strong>Extra</strong></td><td>la lista mia e le app che ho scelto a mano</td></tr>
         <tr><td><strong>Tweaks di Windows</strong></td><td>estensioni visibili e file nascosti, Esplora file su "Questo PC", barra senza widget/chat/ricerca, Copilot spento, niente suggerimenti e pubblicità in Start — con <em>Ripristina</em> se cambi idea</td></tr>
         <tr><td><strong>Mouse fix</strong></td><td>curve MarkC per la tua scala DPI: toglie l'accelerazione del puntatore</td></tr>
@@ -189,9 +189,9 @@
     <summary>Se preferisci farlo a mano (o l'installer non ti va)</summary>
     <p>winget è già dentro Windows 11:</p>
     <div class="cmd" style="align-items:flex-start">
-      <code id="manual">winget install Google.Chrome VideoLAN.VLC 7zip.7zip Valve.Steam Git.Git
+      <code id="manual">winget install Vivaldi.Vivaldi VideoLAN.VLC 7zip.7zip Valve.Steam Git.Git
 winget install Microsoft.VisualStudioCode Notepad++.Notepad++ ShareX.ShareX
-winget install Bitwarden.Bitwarden Mozilla.Firefox Brave.Brave qBittorrent.qBittorrent</code>
+winget install Bitwarden.Bitwarden qBittorrent.qBittorrent</code>
       <button class="copy" data-target="#manual">Copia</button>
     </div>
   </details>
@@ -199,7 +199,7 @@ winget install Bitwarden.Bitwarden Mozilla.Firefox Brave.Brave qBittorrent.qBitt
   <h2 id="p6"><span class="n">6</span>A mano, dopo l'installer</h2>
   <h3>Estensioni del browser</h3>
   <ul>
-    <li><a href="https://github.com/uBlockOrigin/uBOL-home">uBlock Origin Lite</a> su Chrome · <a href="https://github.com/gorhill/uBlock">uBlock Origin full</a> su Firefox/Brave</li>
+    <li><a href="https://github.com/uBlockOrigin/uBOL-home">uBlock Origin Lite</a> su Chrome/Vivaldi · <a href="https://github.com/gorhill/uBlock">uBlock Origin full</a> su Firefox/Brave</li>
     <li><a href="https://redditenhancementsuite.com/">RES</a> se usi Reddit · <a href="https://betterttv.com/">BetterTTV</a> se usi Twitch</li>
     <li><a href="https://github.com/OhMyGuus/I-Still-Dont-Care-About-Cookies">I still don't care about cookies</a> (la fork viva) · <a href="https://www.tampermonkey.net/">Tampermonkey</a> · <a href="https://sponsor.ajay.app/">SponsorBlock</a></li>
     <li><a href="https://bitwarden.com/download/">Bitwarden</a>: l'app la mette l'installer, l'estensione la metti tu — e fai il backup delle 2FA</li>
@@ -217,9 +217,8 @@ winget install Bitwarden.Bitwarden Mozilla.Firefox Brave.Brave qBittorrent.qBitt
   <p>Nell'installer: <em>Wizard e script</em> → <strong>MAS</strong>. Si scarica dal repo ufficiale e si apre da amministratore: scegli <code class="k">1</code> <strong>HWID</strong> (attivazione permanente) o, se non va, <code class="k">2</code> <strong>Ohook</strong> per Office oppure <strong>TSforge</strong>.</p>
   <div class="good"><strong>TSforge</strong> (novità 2k26) attiva Windows/ESU/Office in modo permanente senza toccare i componenti di Windows né installare file. Su build 26100+ usa StaticCID e serve internet.</div>
   <details>
-    <summary>A mano: il comando o il file da scaricare</summary>
-    <div class="cmd"><code>irm https://get.activated.win | iex</code><button class="copy" data-copy="irm https://get.activated.win | iex">Copia</button></div>
-    <p class="mut" style="font-size:13.6px">In una PowerShell <strong>da amministratore</strong>. Oppure scarica <code class="k">MAS_AIO.cmd</code> dal <a href="https://github.com/massgravel/Microsoft-Activation-Scripts">repo di MAS</a> e aprilo.</p>
+    <summary>A mano: scaricare il file di MAS</summary>
+    <p class="mut" style="font-size:13.6px">Scarica <code class="k">MAS_AIO.cmd</code> dal <a href="https://github.com/massgravel/Microsoft-Activation-Scripts">repo di MAS</a> e aprilo <strong>come amministratore</strong>. È il metodo "tradizionale" che consigliano loro.</p>
   </details>
   <p>Se sei barbone ma non troppo: con meno di <strong>5 €</strong> compri una seriale su <a href="https://www.allkeyshop.com/blog/buy-windows-11-pro-cd-key-compare-prices/">AllKeyShop</a>, legata al tuo account.</p>
 

@@ -3,6 +3,19 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.2] - 2026-10-15
+
+### Cambiato
+- Nel preset **Consigliati** c'e' **un solo browser: Vivaldi**. Prima erano spuntati
+  Chrome + Firefox + Brave in contemporanea, che non ha senso (15 app in tutto).
+- **Via il comando `irm https://get.activated.win | iex` dalle guide**: la lista *ClickFix* di
+  uBlock Origin lo segnala come attacco su una pagina web. MAS resta nell'installer
+  (*Wizard e script*, che scarica `MAS_AIO.cmd`), e a mano basta scaricare quel file dal repo.
+
+### Corretto
+- L'id winget di Vivaldi nella guida era vecchio: `VivaldiTechnologies.Vivaldi` non esiste
+  piu', quello giusto e' `Vivaldi.Vivaldi` (verificato con `winget search --exact`).
+
 ## [1.4.1] - 2026-10-15
 
 ### Cambiato
