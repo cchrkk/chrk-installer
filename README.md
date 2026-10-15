@@ -30,8 +30,10 @@ irm https://s.chrk.tk | iex
   Esplora file su "Questo PC", barra senza widget/chat/visualizzazione attivita, niente
   ricerca Bing, Copilot spento, niente suggerimenti e pubblicita in Start e Impostazioni,
   piu' una voce che **ripristina i valori originali**.
-- **Wizard e script**: MAS (attivazione Windows/Office) e WinUtil (debloat) si aprono con un
-  click in una finestra PowerShell **elevata**.
+- **Wizard e script**: MAS (attivazione Windows/Office) e WinUtil (debloat) si aprono in una
+  PowerShell **da amministratore** col comando gia' negli appunti: Ctrl+V e Invio. Il comando
+  non si passa sulla riga di comando perche' Defender blocca la firma `irm <url> | iex`
+  (digitata a mano invece passa).
 - **Fix mouse MarkC** selezionabili: 1:1 @6/11 per la propria scala DPI (rilevata), emulazioni
   W95/98 e W2K, disattivazione accelerazione su login, ripristino default.
 - **Auto-aggiornamento**: `-SelfUpdate` o il pulsante nella GUI.

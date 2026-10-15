@@ -69,14 +69,21 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
    deciso da `$catOrder` in `build.ps1`). Non riordinare a mano nella GUI.
 8. **Non tutte le voci sono app.** Il campo `kind` decide cosa fa `APPLICA`:
    `pkg` = `winget install`, `mouse` = curve MarkC, `tweak` = valori di registro (`ops`,
-   vedi `build/tweaks.inc`), `cmd` = un comando aperto in una finestra PowerShell **elevata**
-   (`MAS`, `WinUtil`). `tweak` e `cmd` vivono in `build/tweaks.inc`, righe letterali come i
-   fix mouse; nel rail le sezioni non-app (Aggiornamenti automatici, Mouse, Tweaks di Windows,
-   Wizard e script) stanno in cima, separate da una riga.
-   **Trappola**: su una hashtable `$op.remove` **non e' `$null`**, e' il metodo `Remove()`
+   vedi `build/tweaks.inc`), `cmd` = apre una PowerShell **da amministratore** col comando
+   negli appunti (`MAS`, `WinUtil`: Ctrl+V e Invio lo fa l'utente). `tweak` e `cmd` vivono in
+   `build/tweaks.inc`, righe letterali come i fix mouse; nel rail le sezioni non-app
+   (Aggiornamenti automatici, Mouse, Tweaks di Windows, Wizard e script) stanno in cima,
+   separate da una riga.
+   **Trappola 1**: su una hashtable `$op.remove` **non e' `$null`**, e' il metodo `Remove()`
    della hashtable, quindi e' sempre "vero" e il tweak verrebbe trattato come una
    cancellazione. I campi di un'op si leggono sempre con `Get-OpField` (che usa
    `Contains()`/`PSObject.Properties`), mai con `$op.<campo>`.
+   **Trappola 2 (wizard)**: passare `irm <url> | iex` sulla riga di comando (`-Command "..."`)
+   fa scattare Defender, che lo blocca; digitato a mano passa. Per questo il comando finisce
+   negli appunti e la finestra va aperta *senza* argomenti: `Start-Process -Verb RunAs`
+   passa da ShellExecute e **non eredita le variabili d'ambiente**. Incollare noi i tasti
+   non funziona comunque: verso una finestra elevata `SendKeys`/`SendInput` viene bloccato
+   dal sistema (UIPI) perche' il nostro processo non e' elevato.
 
 ## La GUI, in breve
 

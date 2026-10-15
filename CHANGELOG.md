@@ -3,6 +3,18 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.2.1] - 2026-10-15
+
+### Corretto
+- **I wizard (MAS, WinUtil) ora si aprono come li apriresti tu**: una PowerShell **da
+  amministratore** col comando negli appunti (Ctrl+V e Invio). Prima il comando veniva
+  passato con `-Command "irm <url> | iex"` e **Windows Defender lo bloccava** - e' la firma
+  tipica dei malware, mentre lo stesso comando digitato a mano passa.
+  Per la cronaca, due vicoli ciechi verificati sul campo: incollare noi i tasti non funziona
+  (verso una finestra elevata `SendKeys` viene bloccato da UIPI, perche' il nostro processo
+  non e' elevato) e `Start-Process -Verb RunAs` **non eredita le variabili d'ambiente** (passa
+  da ShellExecute), quindi nemmeno passare il comando per variabile funziona.
+
 ## [1.2.0] - 2026-10-15
 
 ### Aggiunto

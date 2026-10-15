@@ -166,12 +166,26 @@ function Test-Ops([object]$ops) {
     }
     return $true
 }
-# I wizard (MAS, WinUtil) girano in una finestra PowerShell separata ed elevata: sono
-# interattivi e hanno bisogno di admin.
+# I wizard (MAS, WinUtil) si aprono in una finestra PowerShell normale, NON elevata, come
+# se il comando lo scrivessi a mano: MAS e WinUtil si elevano da soli quando serve.
+#   - il comando non sta sulla riga di comando: 'irm <url> | iex' e' la firma tipica dei
+#     malware e Defender la blocca (digitato a mano invece passa);
+#   - il comando si incolla nella finestra (appunti + Invio), e per farlo i tasti possono
+#     arrivare solo fra processi con la stessa integrita': se la finestra fosse elevata
+#     SendKeys verrebbe bloccato dal sistema (UIPI).
+# Il comando resta negli appunti anche come rete di sicurezza.
+# I wizard (MAS, WinUtil) si aprono come li apriresti tu: una PowerShell **da
+# amministratore** (come dice la loro guida) con il comando gia' negli appunti.
+# Il comando non si passa sulla riga di comando ('irm <url> | iex' e' la firma tipica dei
+# malware e Defender la blocca: digitato a mano invece passa) e non lo incolliamo noi:
+# i tasti non arrivano a una finestra elevata da un processo non elevato (UIPI), e
+# comunque l'incolla manuale e' esattamente il flusso che funziona.
 function Start-Wizard([string]$cmd, [switch]$DryRun) {
-    $argline = '-NoProfile -ExecutionPolicy Bypass -NoExit -Command "' + $cmd + '"'
-    if ($DryRun) { Write-Host ("DRY   powershell " + $argline) -ForegroundColor DarkGray; return }
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $argline -Verb RunAs | Out-Null
+    if ($DryRun) { Write-Host ("DRY   aprirei una PowerShell da amministratore e copierei: " + $cmd) -ForegroundColor DarkGray; return $true }
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+    try { [System.Windows.Forms.Clipboard]::SetText($cmd) } catch { }
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList '-NoExit' | Out-Null
+    return $true
 }
 function Get-CurrentCurveHex([string]$name) {
     try {
@@ -368,9 +382,10 @@ if ($Console -or $UpgradeAll) {
         if ($pkg.kind -eq 'cmd') {
             Write-Host (".... {0}" -f $pkg.name) -ForegroundColor Gray -NoNewline
             try {
-                Start-Wizard $pkg.cmd -DryRun:$DryRun
+                $okWiz = Start-Wizard $pkg.cmd -DryRun:$DryRun
                 if ($DryRun) { Write-Host ("`rDRY   {0,-40} wizard" -f $pkg.name) -ForegroundColor DarkGray }
-                else { Write-Host ("`rOK    {0,-40} aperto in una finestra elevata" -f $pkg.name) -ForegroundColor Green; $ok++ }
+                elseif ($okWiz) { Write-Host ("`rOK    {0,-40} PowerShell aperta: incolla con Ctrl+V e premi Invio" -f $pkg.name) -ForegroundColor Green; $ok++ }
+                else { Write-Host ("`rFAIL  {0,-40} finestra non comparsa" -f $pkg.name) -ForegroundColor Red; $fail++ }
             }
             catch { Write-Host ("`rFAIL  {0,-40} {1}" -f $pkg.name, $_.Exception.Message) -ForegroundColor Red; $fail++ }
             continue
@@ -1086,13 +1101,8 @@ $workerCore = {
         }
 
         if ($info.kind -eq 'cmd') {
-            try {
-                $argline = '-NoProfile -ExecutionPolicy Bypass -NoExit -Command "' + $info.cmd + '"'
-                Start-Process -FilePath 'powershell.exe' -ArgumentList $argline -Verb RunAs | Out-Null
-                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'OK'; det = 'aperto in una finestra elevata' }
-            } catch {
-                Emit @{ t = 'res'; id = $id; name = $info.name; out = 'FAIL'; det = $_.Exception.Message }
-            }
+            # i wizard li lancia la finestra principale (servono appunti e invio tasti)
+            Emit @{ t = 'res'; id = $id; name = $info.name; out = 'SKIP'; det = 'wizard aperto a parte' }
             continue
         }
 
@@ -1125,7 +1135,7 @@ function Test-Busy { return [bool]($script:Handle -and -not $script:Handle.IsCom
 function Start-Worker([string]$kind) {
     if (Test-Busy) { return }
     $script:Queue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
-    $ids = @($script:Rows | Where-Object { $_.cb.Checked } | ForEach-Object { $_.pkg.id })
+    $ids = @($script:Rows | Where-Object { $_.cb.Checked -and $_.pkg.kind -ne 'cmd' } | ForEach-Object { $_.pkg.id })
     $meta = @{}
     foreach ($r in $script:Rows) {
         $meta[$r.pkg.id] = @{ name = $r.pkg.name; src = $r.pkg.src; kind = $r.pkg.kind
@@ -1288,6 +1298,19 @@ $btnInstall.Add_Click({
     $mx = @($sel | Where-Object { $_.pkg.kind -eq 'mouse' -or $_.pkg.kind -eq 'tweak' }).Count
     $wz = @($sel | Where-Object { $_.pkg.kind -eq 'cmd' }).Count
     Write-Log ("[{0}] === AVVIO: {1} pacchetti, {2} voci di registro, {3} wizard ===" -f (Stamp), $pk, $mx, $wz) $col.acc
+    # i wizard si lanciano da qui: servono gli appunti e l invio dei tasti (thread della UI)
+    foreach ($r in @($sel | Where-Object { $_.pkg.kind -eq 'cmd' })) {
+        Write-Log ("[{0}] > {1}" -f (Stamp), $r.pkg.name) $col.acc
+        try {
+            if (Start-Wizard $r.pkg.cmd -DryRun:$DryRun) {
+                Write-Log ("[{0}]   OK    PowerShell da amministratore aperta: incolla con Ctrl+V e premi Invio. Comando: {1}" -f (Stamp), $r.pkg.cmd) $col.ok
+            } else {
+                Write-Log ("[{0}]   FAIL  finestra non comparsa: apri una PowerShell da amministratore e incolla (Ctrl+V, Invio). Comando: {1}" -f (Stamp), $r.pkg.cmd) $col.err
+            }
+        } catch {
+            Write-Log ("[{0}]   FAIL  {1}  -  comando: {2}" -f (Stamp), $_.Exception.Message, $r.pkg.cmd) $col.err
+        }
+    }
     Start-Worker 'install'
 })
 $btnUpgrade.Add_Click({
