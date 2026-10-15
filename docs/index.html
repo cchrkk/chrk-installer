@@ -29,7 +29,7 @@
 <div class="box">
   <h1>CHRK <em>Installer</em></h1>
   <p>Installer winget con GUI: app consigliate, tweak di Windows, fix mouse, wizard MAS/WinUtil.</p>
-  <div class="cmd"><code>irm s.chrk.tk | iex</code><button id="c">Copia</button></div>
+  <div class="cmd"><code>irm ez.chrk.tk | iex</code><button id="c">Copia</button></div>
   <small>PowerShell → incolla → Invio.</small>
   <ul>
     <li><span><strong>Guida FORMAT EZ</strong><br><small>Come formattare Windows in modo pulito</small></span><a href="format-ez.html">apri →</a></li>
@@ -39,7 +39,7 @@
 </div>
 <script>
 document.getElementById("c").addEventListener("click", function () {
-  var t = "irm s.chrk.tk | iex", b = this, o = b.textContent;
+  var t = "irm ez.chrk.tk | iex", b = this, o = b.textContent;
   function ok() { b.classList.add("done"); b.textContent = "Copiato ✓"; setTimeout(function () { b.classList.remove("done"); b.textContent = o; }, 1600); }
   if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok, function () { legacy(); }); } else { legacy(); }
   function legacy() { var a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.top = "-1000px"; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); ok(); } catch (e) {} document.body.removeChild(a); }

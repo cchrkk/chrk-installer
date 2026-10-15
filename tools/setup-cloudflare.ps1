@@ -1,3 +1,9 @@
+# ============================================================================
+# LEGACY: serve solo se vuoi ricreare il vecchio s.chrk.tk (Redirect Rule -> raw).
+# Il comando pubblicato adesso e' irm ez.chrk.tk | iex, servito dal Worker in worker/
+# (un host, due cose: guida per il browser, script per irm). Vedi docs/publishing.md.
+# ============================================================================
+
 <#
 .SYNOPSIS
     Configura s.chrk.tk su Cloudflare: record DNS + Redirect Rule verso GitHub raw.

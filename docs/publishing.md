@@ -1,6 +1,7 @@
 # Pubblicazione
 
-Due pezzi: **l'artefatto su GitHub** e **l'URL corto su Cloudflare** (`s.chrk.tk`).
+Tre pezzi: **l'artefatto su GitHub**, **la guida su GitHub Pages** e **`ez.chrk.tk` su
+Cloudflare**.
 
 ## 1. GitHub
 
@@ -20,141 +21,99 @@ https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer
 ```
 
 > Il repo **deve** contenere `dist/CHRK-Installer.ps1` (e' il file che viene servito).
-> Non serve GitHub Pages, ma e' un'alternativa valida (vedi in fondo).
 
 ### Release (opzionale ma consigliato)
 
 ```powershell
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.4.1
+git push origin v1.4.1
 ```
 
 La workflow `.github/workflows/build.yml` ricompila e allega l'artefatto alla release.
 
-## 2. Cloudflare — `s.chrk.tk`
+## 1b. GitHub Pages — la cartella `docs/`
 
-Zona: `chrk.tk` (gia' su Cloudflare, `always_use_https = on`, `ssl = strict`).
+Il repo ha **Pages attivo** con sorgente *branch `main`, cartella `/docs`*: tutto quello che
+sta in `docs/` e' servito come sito statico.
 
-`irm s.chrk.tk | iex` deve ricevere **il contenuto dello script**. Ci sono due modi.
+```
+https://cchrkk.github.io/chrk-installer/                 -> docs/index.html (landing)
+https://cchrkk.github.io/chrk-installer/format-ez.html   -> la guida FORMAT EZ (HTML)
+https://bio.chrk.tk/chrk-installer/format-ez.html        -> lo stesso, sul dominio custom
+                                                            dell'account Pages
+```
 
-### Modo A — Redirect (semplice, consigliato)
+Basta committare in `docs/` e pushare: Pages ricostruisce da solo. Serve perche'
+`raw.githubusercontent.com` risponde `text/plain`: una pagina HTML li' il browser la mostra
+come testo.
 
-Si crea un record DNS fittizio proxato e una Redirect Rule che manda tutto a GitHub raw.
+## 2. Cloudflare — `ez.chrk.tk`: un host, due cose
 
-**DNS**
-| Tipo | Nome | Contenuto | Proxy |
-|---|---|---|---|
-| CNAME | `s` | `cchrkk.github.io` | Proxied |
+Cosa gira adesso (15/10/2026): un **Worker** su `ez.chrk.tk` che guarda l'header `Accept`.
 
-**Redirect Rule** (Rules → Overview → Create rule → Redirect rule)
+| Richiesta | Risposta |
+|---|---|
+| browser (`Accept: text/html`) | la **guida** FORMAT EZ (`text/html`) |
+| `irm ez.chrk.tk \| iex`, `curl`, `Invoke-WebRequest` | lo **script** dell'installer (`text/plain`, cosi' `iex` lo esegue) |
+| `/guide` (o `?html`) | la guida, forzata |
+| `/installer.ps1` (o `/raw`) | lo script, forzato |
+| `/version` | solo la versione pubblicata |
 
-- When: `Hostname` `equals` `s.chrk.tk`
-- Then: Dynamic redirect, Expression `concat("https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1")`
-- Status: `302`, spunta *Preserve query string* se ti serve
-- Placement: **First** (o almeno prima delle altre regole che riguardano `s`)
-
-Risultato: `http://s.chrk.tk` → 302 → HTTPS GitHub raw → PowerShell segue il redirect.
-
-**Via API** (quello che fa `api`): vedi `tools/setup-cloudflare.ps1`.
-
-### Modo B — Worker (proxy vero, senza redirect)
-
-Il Worker scarica da GitHub e riscrive la risposta: l'URL resta `https://s.chrk.tk`
-e si possono aggiungere endpoint e cache.
+Deploy (dalla cartella `worker/`, con `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`
+nell'ambiente):
 
 ```powershell
-# con wrangler, nella cartella worker/
 npx wrangler deploy
 ```
 
-`worker/wrangler.toml`:
+`worker/wrangler.toml` ha `routes = [{ pattern = "ez.chrk.tk", custom_domain = true }]`: il
+record DNS lo crea Cloudflare da solo. Il codice e' `worker/index.js` (~90 righe, con un
+paio di tentativi se il raw fa i capricci a freddo).
 
-```toml
-name = "chrk-installer"
-main = "index.js"
-compatibility_date = "2026-01-01"
-
-routes = [{ pattern = "s.chrk.tk", custom_domain = true }]
-```
-
-`worker/index.js`:
-
-```js
-const RAW = "https://raw.githubusercontent.com/cchrkk/chrk-installer/main/dist/CHRK-Installer.ps1";
-
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-
-    if (url.pathname === "/version") {
-      const r = await fetch(RAW, { cf: { cacheTtl: 60, cacheEverything: true } });
-      const txt = await r.text();
-      const m = txt.match(/\$script:Version\s*=\s*'([^']+)'/);
-      return new Response((m ? m[1] : "?") + "\n", {
-        headers: { "content-type": "text/plain; charset=utf-8" },
-      });
-    }
-
-    const r = await fetch(RAW, { cf: { cacheTtl: 300, cacheEverything: true } });
-    return new Response(r.body, {
-      status: r.status,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "public, max-age=300",
-      },
-    });
-  },
-};
-```
-
-Con il Worker **non serve** una Redirect Rule; basta il record DNS proxato
-(`s` → qualunque origine, il Worker risponde prima) o il `custom_domain` in `wrangler.toml`.
-
-### Perche' `s.chrk.tk` funziona anche senza schema
-
-`Invoke-WebRequest` completa `s.chrk.tk` in `http://s.chrk.tk`, e con `always_use_https = on`
-Cloudflare risponde con un upgrade a HTTPS. Quindi `irm s.chrk.tk | iex` e' sufficiente.
-
-## 3. Verifica
+Verifica:
 
 ```powershell
-# cosa restituisce l'URL (deve essere il sorgente PowerShell)
-(irm https://s.chrk.tk -UseBasicParsing).Substring(0,60)
+# deve rispondere text/plain e iniziare con <#
+curl.exe -sS -o NUL -w "%{http_code} %{content_type}`n" https://ez.chrk.tk
 
-# redirect
-curl.exe -sI http://s.chrk.tk | Select-String -Pattern 'HTTP|location'
+# deve rispondere text/html (la guida)
+curl.exe -sS -o NUL -w "%{http_code} %{content_type}`n" -H "Accept: text/html" https://ez.chrk.tk
 
-# versione servita (solo col Worker)
-irm https://s.chrk.tk/version
-
-# install completo
-irm https://s.chrk.tk | iex
+irm https://ez.chrk.tk/version      # versione servita
+irm ez.chrk.tk | iex                # install completo
 ```
 
-## 4. Aggiornare la versione pubblicata
+### `s.chrk.tk` (vecchio, ancora vivo)
+
+Per non rompere chi ha il comando vecchio salvato da qualche parte, `s.chrk.tk` resta una
+**Redirect Rule** della zona che manda (302) al raw di GitHub. Si configura con
+`tools/setup-cloudflare.ps1` (default `-Hostname s`). **Non va piu' pubblicizzato**: il
+comando buono e' `irm ez.chrk.tk | iex`.
+
+> Due trappole gia' pagate (15/10/2026): due regole di redirect sullo stesso host **si
+> annullano** (vince la prima), e il 302 **resta in cache** sull'edge finche' non fai
+> `purge_cache`. Dettagli in `INFRA.md` → Cloudflare.
+
+### Perche' `ez.chrk.tk` funziona anche senza schema
+
+`Invoke-WebRequest` completa `ez.chrk.tk` in `http://ez.chrk.tk`, e con `always_use_https = on`
+Cloudflare risponde con un upgrade a HTTPS. Quindi `irm ez.chrk.tk | iex` e' sufficiente.
+
+## 3. Aggiornare la versione pubblicata
 
 1. Alza `VERSION` e `.\build\build.ps1`
 2. Commit + push di `build/` e `dist/`
-3. Cache: con raw GitHub la cache e' di qualche minuto; col Worker usa `cacheTtl` (300s) o
-   fai purge dalla dashboard.
+3. Cache: col Worker `cacheTtl` e' 300s; per vederlo subito, `/version` con un query string
+   a caso.
 
 L'auto-aggiornamento dentro lo script confronta `$script:Version` con quello scaricato da
-`$script:UpdateUrl`, quindi basta ripubblicare.
-
-## Nota: GitHub Pages (alternativa senza Cloudflare)
-
-Attiva Pages sul branch `main` (cartella `/dist`). Poi `s` puo' puntare direttamente a:
-
-| Tipo | Nome | Contenuto | Proxy |
-|---|---|---|---|
-| CNAME | `s` | `cchrkk.github.io` | Proxied |
-
-ma l'URL diventa `https://s.chrk.tk/CHRK-Installer.ps1` (il root servirebbe l'indice).
-Col redirect del Modo A invece il root va gia' bene.
+`$script:UpdateUrl` (= `https://ez.chrk.tk`), quindi basta ripubblicare.
 
 ## Sicurezza
 
-- Il token Cloudflare **non** va committato ne' messo nella repo: usa `CF_API_TOKEN`
-  come variabile d'ambiente (`tools/setup-cloudflare.ps1` lo legge da li').
-- Preferisci un token **scoped** (Zone → DNS → Edit, Zone → Config Rules → Edit) invece di
-  un token globale. Dopo l'uso, revocalo da *My Profile → API Tokens*.
+- Il token Cloudflare **non** va committato ne' messo nella repo: si passa come variabile
+  d'ambiente (`CF_API_TOKEN` / `CLOUDFLARE_API_TOKEN`); `tools/setup-cloudflare.ps1` legge
+  `CF_API_TOKEN`.
+- Preferisci un token **scoped** (Zone → DNS → Edit, Zone → Config Rules → Edit, Workers
+  Scripts → Edit) invece di un token globale. Dopo l'uso, revocalo da
+  *My Profile → API Tokens*.

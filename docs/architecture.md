@@ -13,7 +13,7 @@
 │ assets/logo.png    │      │ .template.ps1    │                  ▼
 └────────────────────┘      └──────────────────┘                  su GitHub,
                                                                   servito via
-        winstall.app/express ─┐                                   Cloudflare s.chrk.tk
+        winstall.app/express ─┐                                   Cloudflare ez.chrk.tk
         WinUtil catalog      ─┘  (nomi + descrizioni)
 ```
 

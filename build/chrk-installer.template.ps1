@@ -4,7 +4,7 @@
 
     PUBBLICAZIONE / INSTALL DA URL
       Il file e' servito su un URL corto (Cloudflare -> GitHub), quindi basta:
-        irm https://s.chrk.tk | iex
+        irm https://ez.chrk.tk | iex
       Lo script, se eseguito in memoria, si copia da solo in
         %LOCALAPPDATA%\CHRK-Installer\CHRK-Installer.ps1
       e si riavvia da li' (serve per cronjob e auto-aggiornamento).

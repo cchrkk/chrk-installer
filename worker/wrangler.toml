@@ -2,5 +2,8 @@ name = "chrk-installer"
 main = "index.js"
 compatibility_date = "2026-01-01"
 
-# Il Worker risponde su s.chrk.tk (dominio custom sulla zona chrk.tk).
-routes = [{ pattern = "s.chrk.tk", custom_domain = true }]
+# Un solo host per due cose: la guida (browser) e lo script (irm/curl).
+# ez.chrk.tk e' un custom domain del Worker: Cloudflare crea il record DNS da solo.
+# s.chrk.tk resta com'e' (Redirect Rule verso il raw), per non rompere chi ha ancora
+# quel comando salvato da qualche parte.
+routes = [{ pattern = "ez.chrk.tk", custom_domain = true }]

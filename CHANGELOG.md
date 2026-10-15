@@ -3,6 +3,17 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.1] - 2026-10-15
+
+### Cambiato
+- **Il comando pubblicato e' ora `irm ez.chrk.tk | iex`**. `ez.chrk.tk` e' un Worker Cloudflare
+  che guarda l'header `Accept`: da browser mostra la **guida FORMAT EZ** (HTML, con i bottoni
+  Copia), da `irm`/`curl` serve lo **script** (`text/plain`, cosi' `iex` lo esegue), piu'
+  `/guide`, `/installer.ps1` e `/version`.
+- `-SelfUpdate` e `-UpdateUrl` puntano a `https://ez.chrk.tk`; README, AGENTS e guide
+  aggiornati. `s.chrk.tk` resta vivo come redirect per chi ha il comando vecchio salvato.
+- La guida FORMAT EZ e' anche su GitHub Pages (`docs/`, landing + guida).
+
 ## [1.4.0] - 2026-10-15
 
 ### Cambiato

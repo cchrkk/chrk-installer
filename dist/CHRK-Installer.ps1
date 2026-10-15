@@ -4,7 +4,7 @@
 
     PUBBLICAZIONE / INSTALL DA URL
       Il file e' servito su un URL corto (Cloudflare -> GitHub), quindi basta:
-        irm https://s.chrk.tk | iex
+        irm https://ez.chrk.tk | iex
       Lo script, se eseguito in memoria, si copia da solo in
         %LOCALAPPDATA%\CHRK-Installer\CHRK-Installer.ps1
       e si riavvia da li' (serve per cronjob e auto-aggiornamento).
@@ -64,8 +64,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'CHRK-Installer Update'
-$script:Version   = '1.4.0'
-$script:UpdateUrl = 'https://s.chrk.tk'
+$script:Version   = '1.4.1'
+$script:UpdateUrl = 'https://ez.chrk.tk'
 
 # ==== UN SOLO FILE: se eseguito in memoria (irm ... | iex) si installa da solo =
 if (-not $PSCommandPath -and -not $NoSelfInstall) {

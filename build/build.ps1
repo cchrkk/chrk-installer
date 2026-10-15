@@ -24,12 +24,12 @@
 
 .EXAMPLE
     .\build\build.ps1
-    .\build\build.ps1 -Version 1.1.0 -UpdateUrl 'https://s.chrk.tk'
+    .\build\build.ps1 -Version 1.1.0 -UpdateUrl 'https://ez.chrk.tk'
 #>
 [CmdletBinding()]
 param(
     [string]$Version,
-    [string]$UpdateUrl = 'https://s.chrk.tk',
+    [string]$UpdateUrl = 'https://ez.chrk.tk',
     [string]$OutFile
 )
 

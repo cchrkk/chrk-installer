@@ -42,7 +42,7 @@ Flusso: modifica `build/*` → esegui `.\build\build.ps1` → committa sia `buil
 | `__PACKAGES__` | le righe `@{ id = ...; name = ...; cat = ...; ... }` di tutte le voci |
 | `__LOGO_B64__` | il logo in base64 |
 | `__VERSION__` | la versione (parametro o file `VERSION`) |
-| `__UPDATE_URL__` | l'URL pubblico per `-SelfUpdate` (default `https://s.chrk.tk`) |
+| `__UPDATE_URL__` | l'URL pubblico per `-SelfUpdate` (default `https://ez.chrk.tk`) |
 
 ## Vincoli tecnici da rispettare
 
@@ -224,4 +224,4 @@ La versione serve all'auto-aggiornamento: viene confrontata con quella scaricata
 - Non usare `-RunLevel Highest` come default per il task pianificato: winget non vede i
   pacchetti installati per-utente quando e' elevato.
 - Non rimuovere il blocco di auto-install in memoria: e' cio' che permette il comando unico
-  `irm s.chrk.tk | iex`.
+  `irm ez.chrk.tk | iex`.

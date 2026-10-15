@@ -4,12 +4,19 @@ Installer personale con **winget** (GUI WinForms), piu' una manciata di tweak di
 (fix mouse MarkC). Un solo file `.ps1` autocontenuto.
 
 ```
-irm https://s.chrk.tk | iex
+irm https://ez.chrk.tk | iex
 ```
 
 ![CHRK Installer](build/assets/logo.png)
 
 ![La GUI](docs/gui.png)
+
+## Guida FORMAT EZ
+
+La guida per formattare Windows in modo pulito, in versione web (bottoni *Copia*, tema
+chiaro/scuro, stampabile in PDF): **<https://cchrkk.github.io/chrk-installer/format-ez.html>**
+· sorgente in [`docs/format-ez.html`](docs/format-ez.html), servita da GitHub Pages
+(branch `main`, cartella `/docs`).
 
 ## Cosa fa
 
@@ -45,13 +52,13 @@ irm https://s.chrk.tk | iex
 
 ```powershell
 # un comando (scarica, si auto-installa in %LOCALAPPDATA% e parte)
-irm https://s.chrk.tk | iex
+irm https://ez.chrk.tk | iex
 
 # con preset
-& ([ScriptBlock]::Create((irm 'https://s.chrk.tk'))) -Preset recommended
+& ([ScriptBlock]::Create((irm 'https://ez.chrk.tk'))) -Preset recommended
 
 # scaricando il file
-irm https://s.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
+irm https://ez.chrk.tk -OutFile "$env:USERPROFILE\CHRK-Installer.ps1"
 powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\CHRK-Installer.ps1"
 ```
 
@@ -125,7 +132,7 @@ Per ricompilare:
 ## Pubblicazione
 
 Vedi **[docs/publishing.md](docs/publishing.md)**: repo GitHub + proxy Cloudflare su
-`s.chrk.tk` (redirect o Worker).
+`ez.chrk.tk` (redirect o Worker).
 
 ## Crediti e licenza
 
