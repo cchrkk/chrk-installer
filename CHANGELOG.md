@@ -3,6 +3,17 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.3] - 2026-10-15
+
+### Cambiato
+- **Guida HTML**: al posto del titolo "FORMAT EZ" c'e' il **logo chrk** (SVG, con inversione
+  automatica sul tema scuro), "una guida **a cura di chrk.**", e al posto di "rev. 2k26" la
+  **data di aggiornamento**. Font **Anonymous Pro** (Google Fonts) per titoli, etichette,
+  tabelle e comandi; il corpo resta sans per leggibilita'. Torna lo spazio per le due
+  immagini della guida (in cima e in fondo): `docs/assets/ez-top.png` e `ez-bottom.png`.
+- **Worker**: serve anche `/assets/*` dal repo (logo e immagini della guida), con il
+  content-type giusto - cosi' `ez.chrk.tk/assets/...` funziona.
+
 ## [1.4.2] - 2026-10-15
 
 ### Cambiato

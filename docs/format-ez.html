@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FORMAT EZ 2026 · CHRK</title>
 <meta name="description" content="Guida EZ 2026: come formattare Windows in modo pulito, con CHRK Installer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f4f6fb; --card:#ffffff; --ink:#14161c; --mut:#5b6472; --line:#e4e8f0;
     --acc:#2f6df6; --acc2:#00b3a4; --ok:#12a150; --warn:#c98a00;
     --shadow:0 1px 2px rgba(20,22,28,.05), 0 8px 24px rgba(20,22,28,.06);
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --mono:"Anonymous Pro",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --lab:"Anonymous Pro",ui-monospace,Menlo,Consolas,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
     --radius:16px;
   }
@@ -33,6 +37,12 @@
   a:hover{border-bottom-color:var(--acc)}
   h1{font-size:clamp(34px,7vw,52px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 8px}
   h1 em{font-style:normal;background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h1,h2,h3,.badge,.chip,nav.toc a,th,summary,.topbtn,footer{font-family:var(--lab)}
+  .logo{display:block;height:clamp(46px,9vw,78px);width:auto;margin:16px 0 8px}
+  html[data-theme="dark"] .logo{filter:invert(1) brightness(1.2)}
+  @media (prefers-color-scheme:dark){html[data-theme="auto"] .logo{filter:invert(1) brightness(1.2)}}
+  .meme{display:block;margin:24px auto;max-width:min(400px,78%);height:auto;border-radius:14px;box-shadow:var(--shadow);background:var(--card)}
+  .meme.wide{max-width:min(420px,82%);margin-bottom:8px}
   h2{font-size:22px;margin:44px 0 12px;letter-spacing:-.015em;display:flex;align-items:center;gap:12px}
   h2 .n{flex:0 0 30px;height:30px;border-radius:10px;background:var(--acc);color:#fff;font-size:14.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
   h3{font-size:16.5px;margin:24px 0 6px}
@@ -95,9 +105,10 @@
 <div class="wrap">
 
   <header class="hero">
-    <span class="badge">rev. 2k26 · aggiornata</span>
-    <h1>FORMAT <em>EZ</em></h1>
-    <p class="mut" style="margin:0 0 6px">Una guida a cura di Gerry · il software lo installa <strong>CHRK Installer</strong></p>
+    <span class="badge">aggiornata il 15/10/2026</span>
+    <h1><img class="logo" src="assets/chrk-logo.svg" alt="chrk"></h1>
+    <p class="mut" style="margin:0 0 6px">Una guida a cura di <strong>chrk.</strong> · il software lo installa <strong>CHRK Installer</strong></p>
+    <img class="meme" src="assets/ez-top.png" alt="" data-meme>
     <div class="cmd big"><code>irm ez.chrk.tk | iex</code><button class="copy" data-copy="irm ez.chrk.tk | iex">Copia</button></div>
     <p class="mut" style="font-size:13.6px;margin:4px 0 0">PowerShell → incolla → Invio. Si apre la GUI con le app consigliate <strong>già spuntate</strong>: premi <em>APPLICA SELEZIONATI</i> e vai a farti un caffè.</p>
     <div class="chips">
@@ -251,6 +262,7 @@ winget install Bitwarden.Bitwarden qBittorrent.qBittorrent</code>
     <span><strong>chrk.</strong> 2k26 ©</span>
     <span>PROFIT?!?!?! 👌 E Z 💯</span>
   </footer>
+  <img class="meme wide" src="assets/ez-bottom.png" alt="" data-meme>
 </div>
 <div class="toast" id="toast">Copiato 👌</div>
 <script>
@@ -313,6 +325,12 @@ winget install Bitwarden.Bitwarden qBittorrent.qBittorrent</code>
     }
     var todo = ev.target.closest(".todo");
     if (todo) { setTimeout(function () { todo.classList.toggle("done", todo.querySelector("input").checked); }, 0); }
+  });
+
+  // le due immagini della guida: se il file non c'e' ancora, spariscono invece di
+  // lasciare l'icona rotta
+  document.querySelectorAll("[data-meme]").forEach(function (img) {
+    img.addEventListener("error", function () { img.style.display = "none"; });
   });
 })();
 </script>

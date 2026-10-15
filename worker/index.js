@@ -14,6 +14,18 @@ const BRANCH = "main";
 const RAW = "https://raw.githubusercontent.com/" + REPO + "/" + BRANCH + "/";
 const SCRIPT_URL = RAW + "dist/CHRK-Installer.ps1";
 const GUIDE_URL = RAW + "docs/format-ez.html";
+const ASSETS = RAW + "docs/assets/";
+
+const TIPI = {
+  svg: "image/svg+xml",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  ico: "image/x-icon",
+  css: "text/css; charset=utf-8",
+  js: "text/javascript; charset=utf-8",
+};
 
 const CACHE = { cf: { cacheTtl: 300, cacheEverything: true } };
 
@@ -57,12 +69,30 @@ export default {
       what = "ps1";
     } else if (path === "/version") {
       what = "version";
+    } else if (path.indexOf("/assets/") === 0) {
+      what = "asset";
     } else if (/text\/html/i.test(accept)) {
       // un browser apre la guida
       what = "html";
     } else {
       // irm / curl / PowerShell: lo script
       what = "ps1";
+    }
+
+    if (what === "asset") {
+      const nome = url.pathname.slice("/assets/".length);
+      if (!/^[A-Za-z0-9._-]+$/.test(nome)) return new Response("no", { status: 404 });
+      const r = await get(ASSETS + nome);
+      if (!r || !r.ok) return new Response("asset non trovato\n", { status: 404 });
+      const ext = (nome.split(".").pop() || "").toLowerCase();
+      return new Response(await r.arrayBuffer(), {
+        status: 200,
+        headers: {
+          "content-type": TIPI[ext] || "application/octet-stream",
+          "cache-control": "public, max-age=600",
+          "x-content-type-options": "nosniff",
+        },
+      });
     }
 
     if (what === "version") {
