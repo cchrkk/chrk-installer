@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'build/**'
+      - 'VERSION'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'build/**'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versione
+        id: v
+        shell: pwsh
+        run: |
+          $v = (Get-Content VERSION -Raw).Trim()
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Compila dist/Ninite-Custom.ps1
+        shell: pwsh
+        run: ./build/build.ps1 -Version '${{ steps.v.outputs.version }}'
+
+      - name: Controlli
+        shell: pwsh
+        run: |
+          $f = 'dist/Ninite-Custom.ps1'
+          $errs = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$errs)
+          if ($errs) { $errs | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+          $t = [System.IO.File]::ReadAllText((Resolve-Path $f))
+          $bad = @($t.ToCharArray() | Where-Object { [int]$_ -gt 127 })
+          if ($bad.Count) { Write-Error "L artefatto contiene $($bad.Count) caratteri non-ASCII"; exit 1 }
+
+          ./dist/Ninite-Custom.ps1 -ShowVersion
+          ./dist/Ninite-Custom.ps1 -Console -Preset mouse -DryRun
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ninite-Custom
+          path: dist/Ninite-Custom.ps1
+
+      - name: Allega alla release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Ninite-Custom.ps1

@@ -1,0 +1,344 @@
+{
+	"$schema" : "https://aka.ms/winget-packages.schema.2.0.json",
+	"CreationDate" : "2026-10-15T09:03:13.483-00:00",
+	"Sources" : 
+	[
+		{
+			"Packages" : 
+			[
+				{
+					"PackageIdentifier" : "NexusMods.Vortex"
+				},
+				{
+					"PackageIdentifier" : "7zip.7zip"
+				},
+				{
+					"PackageIdentifier" : "ShareX.ShareX"
+				},
+				{
+					"PackageIdentifier" : "Google.AndroidStudio"
+				},
+				{
+					"PackageIdentifier" : "ClassicOldSong.Apollo"
+				},
+				{
+					"PackageIdentifier" : "Bambulab.Bambustudio"
+				},
+				{
+					"PackageIdentifier" : "CrystalDewWorld.CrystalDiskInfo"
+				},
+				{
+					"PackageIdentifier" : "CrystalDewWorld.CrystalDiskMark"
+				},
+				{
+					"PackageIdentifier" : "Git.Git"
+				},
+				{
+					"PackageIdentifier" : "Notepad++.Notepad++"
+				},
+				{
+					"PackageIdentifier" : "namazso.PawnIO"
+				},
+				{
+					"PackageIdentifier" : "Daum.PotPlayer"
+				},
+				{
+					"PackageIdentifier" : "TeamViewer.TeamViewer"
+				},
+				{
+					"PackageIdentifier" : "TenacityTeam.Tenacity"
+				},
+				{
+					"PackageIdentifier" : "VideoLAN.VLC"
+				},
+				{
+					"PackageIdentifier" : "Nextcloud.NextcloudDesktop"
+				},
+				{
+					"PackageIdentifier" : "SpikeHD.Dorion"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2010.x64"
+				},
+				{
+					"PackageIdentifier" : "StrawberryPerl.StrawberryPerl"
+				},
+				{
+					"PackageIdentifier" : "Kitware.CMake"
+				},
+				{
+					"PackageIdentifier" : "ArduinoSA.IDE.stable"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2008.x64"
+				},
+				{
+					"PackageIdentifier" : "Google.GoogleDrive"
+				},
+				{
+					"PackageIdentifier" : "SSHFS-Win.SSHFS-Win"
+				},
+				{
+					"PackageIdentifier" : "Oracle.JavaRuntimeEnvironment"
+				},
+				{
+					"PackageIdentifier" : "OuterWildsMods.OuterWildsModManager"
+				},
+				{
+					"PackageIdentifier" : "VirtualDesktop.Streamer"
+				},
+				{
+					"PackageIdentifier" : "EpicGames.EpicGamesLauncher"
+				},
+				{
+					"PackageIdentifier" : "Datronicsoft.SpacedeskDriver.Server"
+				},
+				{
+					"PackageIdentifier" : "ViGEm.ViGEmBus"
+				},
+				{
+					"PackageIdentifier" : "PlayStation.PlayStationAccessories"
+				},
+				{
+					"PackageIdentifier" : "OpenRGB.OpenRGB"
+				},
+				{
+					"PackageIdentifier" : "GitHub.cli"
+				},
+				{
+					"PackageIdentifier" : "Nvidia.PhysX"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.GameInput"
+				},
+				{
+					"PackageIdentifier" : "OpenJS.NodeJS"
+				},
+				{
+					"PackageIdentifier" : "WinDirStat.WinDirStat"
+				},
+				{
+					"PackageIdentifier" : "GoLang.Go"
+				},
+				{
+					"PackageIdentifier" : "EclipseAdoptium.Temurin.17.JDK"
+				},
+				{
+					"PackageIdentifier" : "Klocman.BulkCrapUninstaller"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VisualStudio.2022.Community"
+				},
+				{
+					"PackageIdentifier" : "AnyDesk.AnyDesk"
+				},
+				{
+					"PackageIdentifier" : "Fedora.FedoraMediaWriter"
+				},
+				{
+					"PackageIdentifier" : "HandBrake.HandBrake"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.Edge"
+				},
+				{
+					"PackageIdentifier" : "Valve.Steam"
+				},
+				{
+					"PackageIdentifier" : "RamenSoftware.Windhawk"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2013.x64"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.DesktopRuntime.6"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2015+.x64"
+				},
+				{
+					"PackageIdentifier" : "EpicGames.EpicOnlineServices"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.SDK.9"
+				},
+				{
+					"PackageIdentifier" : "Apache.OpenOffice"
+				},
+				{
+					"PackageIdentifier" : "Python.Launcher"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2008.x86"
+				},
+				{
+					"PackageIdentifier" : "Google.ChromeRemoteDesktopHost"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2015+.x86"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2013.x86"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.SDK.10"
+				},
+				{
+					"PackageIdentifier" : "WinFsp.WinFsp"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCRedist.2010.x86"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.DesktopRuntime.8"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.DesktopRuntime.9"
+				},
+				{
+					"PackageIdentifier" : "jeffvli.Feishin"
+				},
+				{
+					"PackageIdentifier" : "VictorAlves.Aonsoku"
+				},
+				{
+					"PackageIdentifier" : "DenoLand.Deno"
+				},
+				{
+					"PackageIdentifier" : "Google.PlatformTools"
+				},
+				{
+					"PackageIdentifier" : "Gyan.FFmpeg"
+				},
+				{
+					"PackageIdentifier" : "Ninja-build.Ninja"
+				},
+				{
+					"PackageIdentifier" : "PrismLauncher.PrismLauncher"
+				},
+				{
+					"PackageIdentifier" : "Rustlang.Rustup"
+				},
+				{
+					"PackageIdentifier" : "SST.opencode"
+				},
+				{
+					"PackageIdentifier" : "Spotify.Spotify"
+				},
+				{
+					"PackageIdentifier" : "StartIsBack.StartAllBack"
+				},
+				{
+					"PackageIdentifier" : "StefanSundin.Superf4"
+				},
+				{
+					"PackageIdentifier" : "ebkr.r2modman"
+				},
+				{
+					"PackageIdentifier" : "astral-sh.uv"
+				},
+				{
+					"PackageIdentifier" : "Balena.Etcher"
+				},
+				{
+					"PackageIdentifier" : "yt-dlp.FFmpeg"
+				},
+				{
+					"PackageIdentifier" : "yt-dlp.yt-dlp"
+				},
+				{
+					"PackageIdentifier" : "LocalSend.LocalSend"
+				},
+				{
+					"PackageIdentifier" : "Python.Python.3.14"
+				},
+				{
+					"PackageIdentifier" : "infinitepower18.WSASideloader"
+				},
+				{
+					"PackageIdentifier" : "Ollama.Ollama"
+				},
+				{
+					"PackageIdentifier" : "maximmax42.CustomRP"
+				},
+				{
+					"PackageIdentifier" : "Canva.Affinity"
+				},
+				{
+					"PackageIdentifier" : "Anthropic.Claude"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.Teams"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.AppInstaller"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DirectX"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.DotNet.Native.Runtime"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.Outlook"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.PowerShell"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.UI.Xaml.2.8"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCLibs.Desktop.14"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.VCLibs.14"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsAppRuntime.1.5"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsAppRuntime.1.6"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsAppRuntime.1.7"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsAppRuntime.1.8"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsAppRuntime.2"
+				},
+				{
+					"PackageIdentifier" : "Microsoft.WindowsTerminal"
+				}
+			],
+			"SourceDetails" : 
+			{
+				"Argument" : "https://cdn.winget.microsoft.com/cache",
+				"Identifier" : "Microsoft.Winget.Source_8wekyb3d8bbwe",
+				"Name" : "winget",
+				"Type" : "Microsoft.PreIndexed.Package"
+			}
+		},
+		{
+			"Packages" : 
+			[
+				{
+					"PackageIdentifier" : "XP89DCGQ3K6VLD"
+				},
+				{
+					"PackageIdentifier" : "9N1KVPCJP303"
+				}
+			],
+			"SourceDetails" : 
+			{
+				"Argument" : "https://storeedgefd.dsx.mp.microsoft.com/v9.0",
+				"Identifier" : "StoreEdgeFD",
+				"Name" : "msstore",
+				"Type" : "Microsoft.Rest"
+			}
+		}
+	],
+	"WinGetVersion" : "1.29.380"
+}

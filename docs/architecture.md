@@ -1,0 +1,92 @@
+# Architettura
+
+## Visione d'insieme
+
+```
+        dati                       build                        artefatto
+┌────────────────────┐      ┌──────────────────┐      ┌────────────────────────┐
+│ catalog-mine.json  │      │                  │      │                        │
+│ extras.json        │─────▶│   build.ps1      │─────▶│  dist/Ninite-Custom.ps1│
+│ names.json         │      │   (+ rete)       │      │  (autocontenuto, GUI)  │
+│ mousefixes.inc     │      │                  │      └────────────────────────┘
+│ assets/logo.png    │      │ ninite.template  │                  │
+└────────────────────┘      └──────────────────┘                  ▼
+                                                                  su GitHub,
+        winstall.app/express ─┐                                   servito via
+        WinUtil catalog      ─┘  (nomi + descrizioni)             Cloudflare s.chrk.tk
+```
+
+`dist/Ninite-Custom.ps1` non ha dipendenze esterne: catalogo e logo sono **dentro** il file.
+
+## Il file distribuito
+
+- Parametri CLI (`-Preset`, `-Console`, `-InstallCron`, `-SelfUpdate`, ...).
+- Auto-install: se eseguito in memoria (`irm | iex`), copia se stesso in
+  `%LOCALAPPDATA%\Ninite-Custom\` e si riavvia da li' (serve per cronjob e self-update).
+- GUI WinForms: barra superiore (logo, ricerca, preset, azioni), lista con `GroupBox`
+  per categoria, pannello descrizione a destra, log + progresso in basso.
+- Motore winget: un processo `winget` per pacchetto, con mappa degli exit code.
+- Motore registro: scrive le curve `SmoothMouseX/YCurve` e le soglie.
+- Cronjob: `Register-ScheduledTask` (per default **non** elevato) + log su file.
+
+## Esecuzione (threading)
+
+```
+UI thread (STA, WinForms)
+   │  click "APPLICA"
+   ▼
+Start-Worker ──▶ Runspace MTA (PowerShell remoto)
+   │                 │  foreach voce:
+   │                 │    winget install / Set-ItemProperty
+   │                 │    Emit @{ t='pkg'|'res'|'scan'|'done'; ... }
+   │                 ▼
+   │            ConcurrentQueue[object]
+   ▼
+System.Windows.Forms.Timer (150 ms) → Drain-Queue
+   scrive nel log colorato, aggiorna progress bar, %, media, ETA, conteggi
+```
+
+Regole:
+- la runspace **non** tocca i controlli: mette solo messaggi nella coda;
+- la UI non fa mai I/O bloccante (neanche `winget list`, che gira nello scan worker);
+- `Test-Busy` (`$script:Handle.IsCompleted`) impedisce due lavori in parallelo.
+
+## Modello dati di una voce
+
+```powershell
+@{ id = 'Git.Git'; name = 'Git'; cat = 'Sviluppo'; desc = '...'; pub = '...'
+   src = 'winget'; preset = 'mine'|'extra'|''; kind = 'pkg' }
+```
+
+Per i fix mouse (`kind = 'mouse'`) ci sono invece `scale`, `sens`, `x`, `y`, `speed`,
+`t1`, `t2` e `desc`.
+
+`preset` decide chi viene incluso da `-Preset mine|extra` (vedi `Get-Preset`), `kind`
+decide cosa fare quando la voce viene applicata.
+
+## Categorie
+
+L'ordine delle sezioni nella GUI e' l'ordine di `$catOrder` in `build/build.ps1`; la
+classificazione avviene con `Get-Cat` (una catena di regex, la prima che matcha vince).
+Le regole sono `^(...)(?:\.|$)` — vedi la nota in `AGENTS.md`.
+
+## Exit code winget gestiti
+
+| Codice | Significato | Esito |
+|---|---|---|
+| `0` | ok | `OK` |
+| `3010`, `1641`, `-1978334967`, `-1978334965` | installato, serve riavvio | `OK` |
+| `-1978335135` | gia' installato | `SKIP` |
+| `-1978335189` | nessun aggiornamento | `SKIP` |
+| `-1978335107` (`APPINSTALLER_CLI_ERROR_ADMIN_CONTEXT_ACTION_PROHIBITED`) | pacchetto per-utente, non toccabile da elevato | `SKIP` |
+| altro | errore | `FAIL` + `0x…` |
+
+E' il motivo per cui il task pianificato gira **non elevato**: da elevato winget non vede
+i pacchetti installati per-utente.
+
+## Sicurezza
+
+- Lo script non scarica nulla a runtime (tranne `-SelfUpdate`).
+- Il comando `irm <url> | iex` esegue codice remoto: e' il modello di WinUtil, ma va
+  pubblicato su un URL che controlli tu.
+- Nessuna credenziale nel repo.
