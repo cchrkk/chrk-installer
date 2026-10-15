@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHRK Installer</title>
+<style>
+  :root{--bg:#0f1117;--card:#171a22;--ink:#eceef5;--mut:#9aa3b8;--line:#2a2f3c;--acc:#6f9bff;--acc2:#2fd4c4;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif}
+  @media (prefers-color-scheme:light){:root{--bg:#f4f6fb;--card:#fff;--ink:#14161c;--mut:#5b6472;--line:#e4e8f0;--acc:#2f6df6;--acc2:#00b3a4}}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+  .box{width:100%;max-width:620px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 32px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+  h1{font-size:34px;letter-spacing:-.025em;margin:0 0 4px}
+  h1 em{font-style:normal;background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  p{color:var(--mut);margin:6px 0}
+  .cmd{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:18px 0 10px}
+  .cmd code{flex:1;font-family:var(--mono);font-size:16px;font-weight:600;overflow-x:auto}
+  button{font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--acc);border:0;border-radius:9px;padding:9px 15px;cursor:pointer}
+  button.done{background:#12a150}
+  ul{list-style:none;padding:0;margin:18px 0 0;border-top:1px solid var(--line)}
+  li{padding:11px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:center}
+  li:last-child{border-bottom:0}
+  a{color:var(--acc);text-decoration:none;font-weight:600}
+  a:hover{text-decoration:underline}
+  small{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>CHRK <em>Installer</em></h1>
+  <p>Installer winget con GUI: app consigliate, tweak di Windows, fix mouse, wizard MAS/WinUtil.</p>
+  <div class="cmd"><code>irm s.chrk.tk | iex</code><button id="c">Copia</button></div>
+  <small>PowerShell → incolla → Invio.</small>
+  <ul>
+    <li><span><strong>Guida FORMAT EZ</strong><br><small>Come formattare Windows in modo pulito</small></span><a href="format-ez.html">apri →</a></li>
+    <li><span><strong>Repo</strong><br><small>Codice, build e changelog</small></span><a href="https://github.com/cchrkk/chrk-installer">github →</a></li>
+    <li><span><strong>Guida EZ (originale)</strong><br><small>su Trilium</small></span><a href="https://x.chrk.tk/ez">x.chrk.tk/ez →</a></li>
+  </ul>
+</div>
+<script>
+document.getElementById("c").addEventListener("click", function () {
+  var t = "irm s.chrk.tk | iex", b = this, o = b.textContent;
+  function ok() { b.classList.add("done"); b.textContent = "Copiato ✓"; setTimeout(function () { b.classList.remove("done"); b.textContent = o; }, 1600); }
+  if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(ok, function () { legacy(); }); } else { legacy(); }
+  function legacy() { var a = document.createElement("textarea"); a.value = t; a.style.position = "fixed"; a.style.top = "-1000px"; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); ok(); } catch (e) {} document.body.removeChild(a); }
+});
+</script>
+</body>
+</html>
