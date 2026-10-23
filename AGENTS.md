@@ -224,5 +224,8 @@ La versione serve all'auto-aggiornamento: viene confrontata con quella scaricata
   e `winget` e basta.
 - Non usare `-RunLevel Highest` come default per il task pianificato: winget non vede i
   pacchetti installati per-utente quando e' elevato.
+- Non togliere `RunOnlyIfIdle`/`IdleDuration` al task pianificato: con `StartWhenAvailable` il
+  task recupera le esecuzioni saltate, e senza la condizione di idle partirebbe appena accendi
+  il PC - anche in mezzo a una partita (successo davvero: alt-tab continui durante il gioco).
 - Non rimuovere il blocco di auto-install in memoria: e' cio' che permette il comando unico
   `irm ez.chrk.tk | iex`.

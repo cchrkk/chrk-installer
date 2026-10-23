@@ -34,7 +34,9 @@ chiaro/scuro, stampabile in PDF): **<https://cchrkk.github.io/chrk-installer/for
   selezione` nell'intestazione della lista.
 - **Aggiornamento automatico**: sezione dedicata dentro la lista - crea/rimuove il task di
   Windows che esegue `winget upgrade --all` ogni N giorni all'ora scelta, con lo stato e la
-  prossima esecuzione in chiaro.
+  prossima esecuzione in chiaro. **Parte solo a PC inattivo da 10 minuti** (`RunOnlyIfIdle`),
+  quindi mai durante giochi o lavoro: se l'ora salta a PC spento lo fa alla prima finestra
+  libera, non appena accendi.
 - **Tweaks di Windows** (dalla guida EZ): estensioni visibili in Explorer, file nascosti,
   Esplora file su "Questo PC", barra senza widget/chat/visualizzazione attivita, niente
   ricerca Bing, Copilot spento, niente suggerimenti e pubblicita in Start e Impostazioni,

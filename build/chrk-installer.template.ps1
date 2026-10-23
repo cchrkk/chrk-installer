@@ -318,7 +318,13 @@ function Install-Cron([int]$everyDays, [string]$at, [switch]$elevated) {
     $arg = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -UpgradeAll -LogFile "{1}"' -f $scriptPath, $logPath
     $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg
     $trigger = New-ScheduledTaskTrigger -Daily -At $at -DaysInterval ([Math]::Max(1, $everyDays))
-    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 3) -MultipleInstances IgnoreNew
+    # StartWhenAvailable = se l'ora e' passata a PC spento, lo fa appena puo'. Ma "appena puo'" non
+    # deve voler dire mentre giochi: RunOnlyIfIdle + IdleDuration (10 minuti senza input ne' carico)
+    # fa partire l'aggiornamento solo quando il PC e' fermo. DontStopOnIdleEnd = se torni al PC a
+    # meta' aggiornamento lo lascia finire (piu' sicuro che ucciderlo a meta').
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 3) `
+        -MultipleInstances IgnoreNew -RunOnlyIfIdle -IdleDuration (New-TimeSpan -Minutes 10) `
+        -DontStopOnIdleEnd -RunOnlyIfNetworkAvailable -DontStopIfGoingOnBatteries
     $userId = ("{0}\{1}" -f $env:USERDOMAIN, $env:USERNAME)
 
     # Non elevato: task nel contesto utente (evita il problema winget "per-utente" sotto elevazione).
@@ -340,7 +346,7 @@ function Install-Cron([int]$everyDays, [string]$at, [switch]$elevated) {
         try {
             $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType $a.LogonType -RunLevel $a.RunLevel
             Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                -Description 'Aggiorna tutti i pacchetti winget (CHRK-Installer).' -Force -ErrorAction Stop | Out-Null
+                -Description 'Aggiorna i pacchetti winget (chrk.installer): parte solo a PC inattivo, non durante giochi o lavoro.' -Force -ErrorAction Stop | Out-Null
             $lastError = $null
             break
         } catch { $lastError = $_ }
@@ -706,8 +712,8 @@ $lblUpdTitle = New-Label 'Aggiornamento automatico dei programmi' $col.fg 32 $fo
 $lblUpdTitle.Width = 640
 $lblUpdTitle.Margin = [System.Windows.Forms.Padding]::new(0, 0, 0, 6)
 $lblUpdDesc = New-Label ("Un task di Windows esegue 'winget upgrade --all' quando vuoi tu." + "`r`n" +
-    'Non serve tenere aperto nulla: se ne occupa Windows, anche a PC appena acceso.' + "`r`n" +
-    'Il log dell esecuzione automatica finisce in un file accanto allo script.') $col.mut 70
+    'Parte solo a PC inattivo (10 minuti senza input): niente sorprese durante giochi o lavoro.' + "`r`n" +
+    'Se l''ora salta a PC spento lo fa alla prima finestra libera. Il log finisce accanto allo script.') $col.mut 70
 $lblUpdDesc.Width = 660
 $lblUpdDesc.Margin = [System.Windows.Forms.Padding]::new(0, 0, 0, 10)
 
@@ -786,7 +792,8 @@ $listHost.Controls.Add($flow)
 $listHost.Controls.Add($panelUpdates)
 $listHost.Controls.Add($listHead)
 
-$tip.SetToolTip($chkUpdOn, 'Crea o rimuove il task di Windows che aggiorna i programmi da solo.')
+$tip.SetToolTip($chkUpdOn, 'Crea o rimuove il task di Windows che aggiorna i programmi da solo (solo a PC inattivo).')
+$tip.SetToolTip($btnUpdSave, 'Crea o aggiorna il task: parte solo quando il PC e inattivo da 10 minuti, mai mentre giochi.')
 
 # --- pannello dettaglio (destra) -------------------------------------------
 $detail = [System.Windows.Forms.Panel]::new()

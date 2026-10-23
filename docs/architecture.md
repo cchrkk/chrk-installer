@@ -31,7 +31,10 @@
   dentro l'area della lista.
 - Motore winget: un processo `winget` per pacchetto, con mappa degli exit code.
 - Motore registro: scrive le curve `SmoothMouseX/YCurve` e le soglie.
-- Cronjob: `Register-ScheduledTask` (per default **non** elevato) + log su file.
+- Cronjob: `Register-ScheduledTask` (per default **non** elevato) + log su file. Ha
+  `StartWhenAvailable` (recupera l'esecuzione saltata a PC spento) **ma** anche `RunOnlyIfIdle`
+  con `IdleDuration` 10 minuti: parte solo quando il PC e' fermo, mai mentre giochi. Se torni
+  al PC a meta' (`StopOnIdleEnd = false`) lo lascia finire invece di ucciderlo.
 
 ## Esecuzione (threading)
 

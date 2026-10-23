@@ -3,6 +3,19 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/);
 la versione vive nel file `VERSION`.
 
+## [1.4.7] - 2026-10-23
+
+### Corretto
+- **L'aggiornamento automatico non parte piu' a tradimento.** Con `StartWhenAvailable`
+  un'esecuzione saltata (PC spento alle 03:00) partiva alla prima accensione, anche in mezzo a
+  una partita: alt-tab continui mentre giocavi. Ora il task ha `RunOnlyIfIdle` +
+  `IdleDuration` 10 minuti, `RunOnlyIfNetworkAvailable` e `StopOnIdleEnd = false` (se torni al
+  PC a meta' lo lascia finire invece di ucciderlo). Verificato sull'XML del task:
+  `RunOnlyIfIdle = true`, `IdleSettings/Duration = PT10M`.
+
+### Cambiato
+- Guida: logo chrk un po' piu' grande (`clamp(62px,12vw,112px)`).
+
 ## [1.4.6] - 2026-10-15
 
 ### Cambiato
